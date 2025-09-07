@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 import json
 import os
-from main import run_game
+from main import start_new_game
 
 @pytest.fixture
 def mock_game_engine():
@@ -24,7 +24,7 @@ def mock_llm_provider():
 
 def test_run_game_success(mock_game_engine, mock_terminal_ui, mock_llm_provider):
     """
-    Tests that the run_game function can be called successfully.
+    Tests that the start_new_game function can be called successfully.
     """
     # Create dummy scenario and config files
     scenario = {"name": "Test Scenario", "players": []}
@@ -35,7 +35,7 @@ def test_run_game_success(mock_game_engine, mock_terminal_ui, mock_llm_provider)
     with open("test_config.json", "w") as f:
         json.dump(config, f)
 
-    run_game("test_scenario.json", "test_config.json")
+    start_new_game("test_scenario.json", "test_config.json")
 
     mock_game_engine.assert_called_once()
     mock_terminal_ui.assert_called_once()
@@ -58,7 +58,7 @@ def test_run_game_config_not_found(mock_game_engine, mock_terminal_ui, mock_llm_
     with open("test_scenario.json", "w") as f:
         json.dump(scenario, f)
 
-    run_game("test_scenario.json", "non_existent_config.json")
+    start_new_game("test_scenario.json", "non_existent_config.json")
 
     mock_game_engine.assert_called_once()
     mock_terminal_ui.assert_called_once()

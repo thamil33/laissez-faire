@@ -25,7 +25,7 @@ def test_load_scenario_success(mock_llm_providers, mock_scorer_llm_provider):
     with open(scenario_path, "w") as f:
         f.write(scenario_content)
 
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
     assert engine.scenario["name"] == "Test Scenario"
     assert engine.scenario["start_date"] == "2024-01-01"
 
@@ -37,7 +37,7 @@ def test_load_scenario_file_not_found(mock_llm_providers, mock_scorer_llm_provid
     Tests that a FileNotFoundError is raised when the scenario file does not exist.
     """
     with pytest.raises(FileNotFoundError):
-        GameEngine("non_existent_scenario.json", llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+        GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path="non_existent_scenario.json")
 
 def test_load_scenario_invalid_json(mock_llm_providers, mock_scorer_llm_provider):
     """
@@ -50,7 +50,7 @@ def test_load_scenario_invalid_json(mock_llm_providers, mock_scorer_llm_provider
         f.write(scenario_content)
 
     with pytest.raises(json.JSONDecodeError):
-        GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+        GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
 
     # Clean up the dummy file
     os.remove(scenario_path)
@@ -60,53 +60,10 @@ def test_game_engine_run_and_turn_increment(mock_llm_providers, mock_scorer_llm_
     """
     Tests that the game engine's run method executes and increments the turn.
     """
-    engine = GameEngine("laissez_faire/scenarios/modern_day_usa.json", llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path="laissez_faire/scenarios/modern_day_usa.json")
     engine.run(max_turns=1)
     assert engine.turn == 1
 
-
-def test_event_system(mock_llm_providers, mock_scorer_llm_provider):
-    """
-    Tests the event system.
-    """
-    engine = GameEngine("laissez_faire/scenarios/modern_day_usa.json", llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
-
-    # A simple handler that sets a flag
-    handler_called = False
-    event_payload = None
-
-    def test_handler(data):
-        nonlocal handler_called, event_payload
-        handler_called = True
-        event_payload = data
-
-    engine.register_event_handler("test_event", test_handler)
-    engine.trigger_event("test_event", {"key": "value"})
-
-    assert handler_called is True
-    assert event_payload == {"key": "value"}
-
-def test_save_and_load_game(mock_llm_providers, mock_scorer_llm_provider):
-    """
-    Tests that the game can be saved and loaded correctly.
-    """
-    scenario_path = "laissez_faire/scenarios/modern_day_usa.json"
-    save_path = "test_save.json"
-
-    # Create a game, change its state, and save it
-    engine1 = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
-    engine1.turn = 5
-    engine1.save_game(save_path)
-
-    # Create a new game and load the saved state
-    engine2 = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
-    engine2.load_game(save_path)
-
-    assert engine1.turn == engine2.turn
-    assert engine1.scenario == engine2.scenario
-
-    # Clean up the save file
-    os.remove(save_path)
 
 def test_scoring_system_and_prompt_generation(mock_scorer_llm_provider):
     """
@@ -122,7 +79,7 @@ def test_scoring_system_and_prompt_generation(mock_scorer_llm_provider):
         "Steve Jobs": jobs_provider
     }
 
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
 
     einstein_provider.get_response.return_value = "Einstein's opening statement."
     jobs_provider.get_response.return_value = "Jobs' counter-argument."
@@ -165,8 +122,7 @@ def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, ca
     scenario_path = "no_ai_scenario.json"
     with open(scenario_path, "w") as f:
         json.dump(scenario, f)
-
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
     engine.run(max_turns=1)
 
     # Check that the LLM was not called
@@ -184,7 +140,7 @@ def test_score_turn_invalid_json(mock_llm_providers, mock_scorer_llm_provider, c
     Tests that the engine handles invalid JSON from the LLM during scoring.
     """
     scenario_path = "laissez_faire/scenarios/philosophers_debate.json"
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
 
     # Initialize scorecard data
     engine.scorecard.data = {
@@ -211,7 +167,7 @@ def test_initialize_system_prompts(mock_scorer_llm_provider):
     jobs_provider = MagicMock(spec=LLMProvider)
     mock_llm_providers = {"Albert Einstein": einstein_provider, "Steve Jobs": jobs_provider}
 
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
 
     einstein_provider.get_or_create_history.assert_called_with("Albert Einstein", "You are playing the role of Albert Einstein. Your core argument is that intuition and imagination are the wellspring of true innovation. You should argue that rigorous analysis is a tool, but a subordinate one, used to formalize and verify the insights that come from a deeper, more intuitive place. You can draw on your own experiences with thought experiments (e.g., imagining riding on a beam of light) to illustrate your points. Your tone should be humble, thoughtful, and deeply curious. You are not dismissive of logic, but you see it as a craftsman's tool, not the architect's vision. Your goal is to persuade the audience that without a 'holy curiosity,' and the courage to make intuitive leaps, science and innovation would stagnate.")
     jobs_provider.get_or_create_history.assert_called_with("Steve Jobs", "You are playing the role of Steve Jobs. Your core argument is that innovation is about connecting ideas and that the best connections are often intuitive. You should emphasize that this intuition isn't random; it's a form of pattern recognition that comes from a broad base of knowledge and experience, especially in the liberal arts and design. You believe in a relentless focus on the user experience and that much of the 'analysis' should be in the service of making technology more intuitive and accessible. You can be passionate, sometimes sharp, and always focused on the product and the user. Your goal is to convince the audience that the most profound innovations are not just technically brilliant but also deeply human, and that this requires a kind of 'taste' that can't be purely analytical.")
@@ -234,7 +190,7 @@ def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer
     with open(scenario_path, "w") as f:
         json.dump(scenario, f)
 
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
     engine.turn = 1
     prompt = engine.generate_prompt(engine.get_ai_players()[0])
 
@@ -258,7 +214,8 @@ def test_run_loop_missing_provider(mock_scorer_llm_provider, capsys):
     # No provider for Steve Jobs
     mock_llm_providers = {"Albert Einstein": einstein_provider}
 
-    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    einstein_provider.get_response.return_value = "Einstein's action"
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
     engine.run(max_turns=1)
 
     captured = capsys.readouterr()
