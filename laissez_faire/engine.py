@@ -1,5 +1,6 @@
 import json
 import re
+import os
 from .llm import LLMProvider
 
 class Scorecard:
@@ -61,34 +62,34 @@ class GameEngine:
     The main game engine for Laissez-faire.
     """
 
-    def __init__(self, scenario_path, llm_providers: dict, scorer_llm_provider: LLMProvider):
+    def __init__(self, llm_providers: dict, scorer_llm_provider: LLMProvider, scenario_path=None):
         """
-        Initializes the game engine with a scenario.
-        :param scenario_path: The path to the scenario JSON file.
+        Initializes the game engine.
         :param llm_providers: A dictionary of LLM providers for each player.
         :param scorer_llm_provider: An LLM provider for the scorer.
+        :param scenario_path: The path to the scenario JSON file (optional).
         """
-        self.scenario = self.load_scenario(scenario_path)
+        self.scenario = self.load_scenario(scenario_path) if scenario_path else {}
         self.turn = 0
-        self.event_handlers = {}
         self.llm_providers = llm_providers
         self.scorer_llm_provider = scorer_llm_provider
         self.history = []
         self.scorecard = None
 
-        self.initialize_system_prompts()
+        if self.scenario:
+            self.initialize_system_prompts()
 
-        if "scorecard" in self.scenario:
-            self.scorecard = Scorecard(self.scenario)
-            # Initialize the scorecard with data from the scenario
-            player_entity_key = self.scenario.get("player_entity_key")
-            if player_entity_key and player_entity_key in self.scenario:
-                initial_data = self.scenario[player_entity_key]
-                for player, data in initial_data.items():
-                    if player not in self.scorecard.data:
-                        self.scorecard.data[player] = {}
-                    for key, value in data.items():
-                        self.scorecard.data[player][key] = value
+            if "scorecard" in self.scenario:
+                self.scorecard = Scorecard(self.scenario)
+                # Initialize the scorecard with data from the scenario
+                player_entity_key = self.scenario.get("player_entity_key")
+                if player_entity_key and player_entity_key in self.scenario:
+                    initial_data = self.scenario[player_entity_key]
+                    for player, data in initial_data.items():
+                        if player not in self.scorecard.data:
+                            self.scorecard.data[player] = {}
+                        for key, value in data.items():
+                            self.scorecard.data[player][key] = value
 
     def initialize_system_prompts(self):
         """
@@ -111,28 +112,6 @@ class GameEngine:
         with open(scenario_path, 'r') as f:
             return json.load(f)
 
-    def register_event_handler(self, event_type, handler):
-        """
-        Registers a handler for a specific event type.
-
-        :param event_type: The type of event (e.g., 'economy_update').
-        :param handler: The function to call when the event is triggered.
-        """
-        if event_type not in self.event_handlers:
-            self.event_handlers[event_type] = []
-        self.event_handlers[event_type].append(handler)
-
-    def trigger_event(self, event_type, data):
-        """
-        Triggers an event, calling all registered handlers.
-
-        :param event_type: The type of event to trigger.
-        :param data: The data to pass to the event handlers.
-        """
-        if event_type in self.event_handlers:
-            for handler in self.event_handlers[event_type]:
-                handler(data)
-
     def run(self, max_turns=10, ui=None):
         """
         Runs the main game loop.
@@ -150,7 +129,6 @@ class GameEngine:
         while self.turn < max_turns:
             self.turn += 1
             print(f"--- Turn {self.turn} ---")
-            self.trigger_event("turn_start", {"turn": self.turn})
 
             if ai_players:
                 for player in ai_players:
@@ -177,6 +155,12 @@ class GameEngine:
             self.score_turn()
             if ui and self.scorecard:
                 ui.display_scores(self.scorecard)
+
+            # Auto-save the game
+            if not os.path.exists("saves"):
+                os.makedirs("saves")
+            self.save_game("saves/autosave.json")
+            print("Game auto-saved.")
 
         print("Game simulation finished.")
 
@@ -278,11 +262,12 @@ class GameEngine:
         """
         game_state = {
             "turn": self.turn,
-            "scenario": self.scenario
-            # Note: We are not saving event handlers. This is a simplification.
+            "scenario": self.scenario,
+            "history": self.history,
+            "scorecard": self.scorecard.data if self.scorecard else {}
         }
         with open(save_path, 'w') as f:
-            json.dump(game_state, f)
+            json.dump(game_state, f, indent=2)
 
     def load_game(self, save_path):
         """
@@ -295,3 +280,8 @@ class GameEngine:
 
         self.turn = game_state["turn"]
         self.scenario = game_state["scenario"]
+        self.history = game_state["history"]
+
+        if "scorecard" in self.scenario:
+            self.scorecard = Scorecard(self.scenario)
+            self.scorecard.data = game_state.get("scorecard", {})

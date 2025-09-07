@@ -97,7 +97,9 @@ class LLMProvider:
 
     def _get_response_local(self, messages):
         """
-        Gets a placeholder response from a local model.
+        Gets a placeholder response from a local model. This is used as a
+        fallback when a proper LLM provider is not configured, allowing the
+        application to run without requiring an API key.
         """
         print(f"Sending messages to local model: {messages}")
         return "This is a placeholder response from the local LLM."
