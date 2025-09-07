@@ -201,3 +201,65 @@ def test_score_turn_invalid_json(mock_llm_providers, mock_scorer_llm_provider, c
     captured = capsys.readouterr()
     assert "Error: Could not decode scores from LLM response." in captured.out
     assert engine.scorecard.data == {"Einstein": {"eloquence": 0, "logic": 0}, "Jobs": {"eloquence": 0, "logic": 0}}
+
+def test_initialize_system_prompts(mock_scorer_llm_provider):
+    """
+    Tests that system prompts are initialized correctly for AI players.
+    """
+    scenario_path = "laissez_faire/scenarios/philosophers_debate.json"
+    einstein_provider = MagicMock(spec=LLMProvider)
+    jobs_provider = MagicMock(spec=LLMProvider)
+    mock_llm_providers = {"Albert Einstein": einstein_provider, "Steve Jobs": jobs_provider}
+
+    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+
+    einstein_provider.get_or_create_history.assert_called_with("Albert Einstein", "You are playing the role of Albert Einstein. Your core argument is that intuition and imagination are the wellspring of true innovation. You should argue that rigorous analysis is a tool, but a subordinate one, used to formalize and verify the insights that come from a deeper, more intuitive place. You can draw on your own experiences with thought experiments (e.g., imagining riding on a beam of light) to illustrate your points. Your tone should be humble, thoughtful, and deeply curious. You are not dismissive of logic, but you see it as a craftsman's tool, not the architect's vision. Your goal is to persuade the audience that without a 'holy curiosity,' and the courage to make intuitive leaps, science and innovation would stagnate.")
+    jobs_provider.get_or_create_history.assert_called_with("Steve Jobs", "You are playing the role of Steve Jobs. Your core argument is that innovation is about connecting ideas and that the best connections are often intuitive. You should emphasize that this intuition isn't random; it's a form of pattern recognition that comes from a broad base of knowledge and experience, especially in the liberal arts and design. You believe in a relentless focus on the user experience and that much of the 'analysis' should be in the service of making technology more intuitive and accessible. You can be passionate, sometimes sharp, and always focused on the product and the user. Your goal is to convince the audience that the most profound innovations are not just technically brilliant but also deeply human, and that this requires a kind of 'taste' that can't be purely analytical.")
+
+def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer_llm_provider):
+    """
+    Tests the prompt generation with various contexts.
+    """
+    scenario = {
+        "name": "Test Scenario",
+        "players": [{"name": "Player1", "type": "ai", "controls": "USA"}],
+        "player_entity_key": "countries",
+        "countries": {
+            "USA": {"capital": "Washington D.C.", "population": 330, "economy": "strong"},
+            "China": {"capital": "Beijing", "population": 1400}
+        },
+        "parameters": {"global_tension": "high", "year": 2024}
+    }
+    scenario_path = "test_generate_prompt.json"
+    with open(scenario_path, "w") as f:
+        json.dump(scenario, f)
+
+    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine.turn = 1
+    prompt = engine.generate_prompt(engine.get_ai_players()[0])
+
+    assert "Turn 1" in prompt
+    assert "Global Context:" in prompt
+    assert "Global Tension: high" in prompt
+    assert "Your Current Status:" in prompt
+    assert "Capital: Washington D.C." in prompt
+    assert "Status of Other Participants:" in prompt
+    assert "China:" in prompt
+    assert "Population: 1400" in prompt
+
+    os.remove(scenario_path)
+
+def test_run_loop_missing_provider(mock_scorer_llm_provider, capsys):
+    """
+    Tests that the run loop handles a missing LLM provider for a player.
+    """
+    scenario_path = "laissez_faire/scenarios/philosophers_debate.json"
+    einstein_provider = MagicMock(spec=LLMProvider)
+    # No provider for Steve Jobs
+    mock_llm_providers = {"Albert Einstein": einstein_provider}
+
+    engine = GameEngine(scenario_path, llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider)
+    engine.run(max_turns=1)
+
+    captured = capsys.readouterr()
+    assert "Warning: No LLM provider found for player Steve Jobs. Skipping turn." in captured.out

@@ -2,3 +2,4 @@ pytest
 requests-mock
 ruff
 uv
+pytest-cov
