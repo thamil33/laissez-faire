@@ -2,48 +2,106 @@ import requests
 
 class LLMProvider:
     """
-    A provider for interacting with a Large Language Model.
+    A provider for interacting with a Large Language Model, with support for
+    conversation history.
     """
 
-    def __init__(self, model="local", api_key=None, base_url=None):
+    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10):
         """
         Initializes the LLM provider.
 
         :param model: The model to use (e.g., 'local', 'openai', 'ollama').
         :param api_key: The API key for the LLM service.
         :param base_url: The base URL for the LLM service (for local models).
+        :param max_history_length: The maximum number of messages to keep in the history.
         """
         self.model = model
         self.api_key = api_key
         self.base_url = base_url
+        self.histories = {}
+        self.max_history_length = max_history_length
 
-    def get_response(self, prompt):
+    def get_or_create_history(self, player_name, system_prompt=None):
         """
-        Gets a response from the LLM.
+        Retrieves or creates a conversation history for a player.
 
+        :param player_name: The name of the player.
+        :param system_prompt: An optional system prompt to initialize the history.
+        :return: The conversation history (a list of messages).
+        """
+        if player_name not in self.histories:
+            self.histories[player_name] = []
+            if system_prompt:
+                self.histories[player_name].append({"role": "system", "content": system_prompt})
+        return self.histories[player_name]
+
+    def get_response(self, player_name, prompt):
+        """
+        Gets a response from the LLM, maintaining conversation history.
+
+        :param player_name: The name of the player to associate with the history.
         :param prompt: The prompt to send to the LLM.
         :return: The LLM's response as a string.
         """
+        history = self.get_or_create_history(player_name)
+        history.append({"role": "user", "content": prompt})
+
+        # Summarize history if it's too long
+        self.summarize_history(player_name)
+
         if self.model == "local":
-            return self._get_response_local(prompt)
+            response_content = self._get_response_local(history)
         elif self.model == "openai":
-            return self._get_response_openai(prompt)
+            response_content = self._get_response_openai(history)
         elif self.model == "ollama":
-            return self._get_response_ollama(prompt)
-        # Add other models here as needed
+            response_content = self._get_response_ollama(history)
         else:
             raise ValueError(f"Unsupported LLM model: {self.model}")
 
-    def _get_response_local(self, prompt):
+        history.append({"role": "assistant", "content": response_content})
+        return response_content
+
+    def summarize_history(self, player_name):
+        """
+        Summarizes the history for a player if it exceeds the max length.
+        """
+        history = self.histories.get(player_name, [])
+        if len(history) > self.max_history_length:
+            print(f"Summarizing history for {player_name}...")
+
+            # Find the system prompt and keep it
+            system_prompt = None
+            if history and history[0]["role"] == "system":
+                system_prompt = history.pop(0)
+
+            # Create the summarization prompt
+            summarization_prompt = (
+                "Please summarize the following conversation. "
+                "The summary should be concise and capture the key decisions and outcomes."
+            )
+
+            # Get the summary
+            summary = self._get_response_openai([
+                {"role": "system", "content": summarization_prompt},
+                {"role": "user", "content": "\n".join([f"{m['role']}: {m['content']}" for m in history])}
+            ])
+
+            # Replace the history with the summary
+            self.histories[player_name] = []
+            if system_prompt:
+                self.histories[player_name].append(system_prompt)
+            self.histories[player_name].append({"role": "system", "content": f"Summary of previous events: {summary}"})
+
+    def _get_response_local(self, messages):
         """
         Gets a placeholder response from a local model.
         """
-        print(f"Sending prompt to local model: {prompt}")
+        print(f"Sending messages to local model: {messages}")
         return "This is a placeholder response from the local LLM."
 
-    def _get_response_openai(self, prompt):
+    def _get_response_openai(self, messages):
         """
-        Gets a response from the OpenAI API or a compatible API.
+        Gets a response from the OpenAI API, using conversation history.
         """
         if not self.api_key:
             raise ValueError("API key is required for OpenAI-compatible models.")
@@ -56,29 +114,32 @@ class LLMProvider:
             "Content-Type": "application/json"
         }
         data = {
-            "model": "gpt-3.5-turbo", # This should also be configurable
-            "messages": [{"role": "user", "content": prompt}]
+            "model": "gpt-3.5-turbo",
+            "messages": messages
         }
 
-        # This is a basic implementation. In a real scenario, you'd
-        # want to handle errors, timeouts, etc.
         response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status() # Raise an exception for bad status codes
+        response.raise_for_status()
 
         return response.json()["choices"][0]["message"]["content"]
 
-    def _get_response_ollama(self, prompt):
+    def _get_response_ollama(self, messages):
         """
         Gets a response from an Ollama model.
+        Note: This is a simplified implementation. Ollama's /api/generate
+        doesn't natively support a list of messages in the same way as OpenAI.
+        A more robust solution would be needed for a true conversational experience.
         """
         if not self.base_url:
-            # Default for Ollama
             self.base_url = "http://localhost:11434"
 
-        # Ollama uses a different API endpoint and request format
         url = f"{self.base_url}/api/generate"
+
+        # Combine messages into a single prompt string
+        prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
+
         data = {
-            "model": "llama2", # This should be configurable
+            "model": "llama2",
             "prompt": prompt,
             "stream": False
         }
@@ -86,5 +147,4 @@ class LLMProvider:
         response = requests.post(url, json=data)
         response.raise_for_status()
 
-        # For non-streaming, it's a single JSON object with a "response" key
         return response.json()["response"]

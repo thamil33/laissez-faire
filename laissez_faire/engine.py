@@ -61,18 +61,23 @@ class GameEngine:
     The main game engine for Laissez Faire.
     """
 
-    def __init__(self, scenario_path, llm_provider: LLMProvider):
+    def __init__(self, scenario_path, llm_providers: dict, scorer_llm_provider: LLMProvider):
         """
         Initializes the game engine with a scenario.
-
         :param scenario_path: The path to the scenario JSON file.
+        :param llm_providers: A dictionary of LLM providers for each player.
+        :param scorer_llm_provider: An LLM provider for the scorer.
         """
         self.scenario = self.load_scenario(scenario_path)
         self.turn = 0
         self.event_handlers = {}
-        self.llm_provider = llm_provider
+        self.llm_providers = llm_providers
+        self.scorer_llm_provider = scorer_llm_provider
         self.history = []
         self.scorecard = None
+
+        self.initialize_system_prompts()
+
         if "scorecard" in self.scenario:
             self.scorecard = Scorecard(self.scenario)
             # Initialize the scorecard with data from the scenario
@@ -84,6 +89,17 @@ class GameEngine:
                         self.scorecard.data[player] = {}
                     for key, value in data.items():
                         self.scorecard.data[player][key] = value
+
+    def initialize_system_prompts(self):
+        """
+        Initializes the conversation history for each AI player with their system prompt.
+        """
+        for player in self.get_ai_players():
+            provider = self.llm_providers.get(player['name'])
+            if provider:
+                system_prompt = player.get("system_prompt")
+                if system_prompt:
+                    provider.get_or_create_history(player['name'], system_prompt)
 
     def load_scenario(self, scenario_path):
         """
@@ -143,7 +159,11 @@ class GameEngine:
 
                     # Get the LLM's action
                     print(f"Getting action for {player['name']}...")
-                    action = self.llm_provider.get_response(prompt)
+                    provider = self.llm_providers.get(player['name'])
+                    if not provider:
+                        print(f"Warning: No LLM provider found for player {player['name']}. Skipping turn.")
+                        continue
+                    action = provider.get_response(player['name'], prompt)
                     print(f"AI Action from {player['name']}: {action}")
 
                     # Store the action in the history
@@ -169,50 +189,37 @@ class GameEngine:
     def generate_prompt(self, player):
         """
         Generates a prompt for the LLM based on the current game state.
-        This version is more general and data-driven.
+        This prompt provides the turn-specific context.
         """
         scenario = self.scenario
         player_entity_key = scenario.get("player_entity_key", "countries")
         player_entities = scenario.get(player_entity_key, {})
 
         player_entity_name = player.get("controls")
-        if not player_entity_name:
-            player_entity_name = player.get("country")
-
         player_entity_data = player_entities.get(player_entity_name, {})
 
-        # New: Check for a detailed, LLM-facing prompt
-        llm_prompt = player.get("ai_prompt", {}).get("llm_facing")
-        if llm_prompt:
-            prompt = llm_prompt
-            prompt += f"\n\nCurrent Turn: {self.turn}"
-            prompt += f"\nScenario: {scenario['description']}"
-        else:
-            # Fallback to the original prompt generation
-            prompt = f"You are {player['name']}.\n"
-            prompt += f"It is turn {self.turn}.\n"
-            prompt += f"Scenario: {scenario['description']}\n\n"
+        prompt = f"It is now Turn {self.turn}.\n"
 
         # Add dynamic context to the prompt
         if "parameters" in scenario and scenario["parameters"]:
-            prompt += "\n\nGlobal Context:\n"
+            prompt += "\nGlobal Context:\n"
             for key, value in scenario["parameters"].items():
                 prompt += f"  - {key.replace('_', ' ').title()}: {value}\n"
 
         if player_entity_data:
-            prompt += "\nYour Status:\n"
+            prompt += "\nYour Current Status:\n"
             for key, value in player_entity_data.items():
                 prompt += f"  - {key.replace('_', ' ').title()}: {value}\n"
 
         if player_entities:
-            prompt += "\nOther Participants:\n"
+            prompt += "\nStatus of Other Participants:\n"
             for entity_name, entity_data in player_entities.items():
                 if entity_name != player_entity_name:
                     prompt += f"  - {entity_name}:\n"
-                    for key, value in list(entity_data.items())[:3]:
+                    for key, value in list(entity_data.items())[:2]: # Keep it brief
                         prompt += f"    - {key.replace('_', ' ').title()}: {value}\n"
 
-        prompt += "\nWhat is your next move or statement?"
+        prompt += "\nBased on the current situation, what is your next move or statement?"
         return prompt
 
     def score_turn(self):
@@ -229,7 +236,7 @@ class GameEngine:
             return
 
         print("Getting scores from LLM...")
-        scores_str = self.llm_provider.get_response(scoring_prompt)
+        scores_str = self.scorer_llm_provider.get_response("scorer", scoring_prompt)
         print(f"LLM Scores: {scores_str}")
 
         try:
