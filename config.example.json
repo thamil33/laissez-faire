@@ -12,12 +12,6 @@
       "api_key": "YOUR_OPENROUTER_API_KEY",
       "base_url": "https://openrouter.ai/api/v1"
     },
-    "ollama": {
-      "model": "ollama",
-      "model_name": "llama3",
-      "api_key": "ollama",
-      "base_url": "http://localhost:11434/v1"
-    },
     "lm_studio": {
       "model": "openai",
       "model_name": "local-model",

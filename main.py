@@ -3,20 +3,21 @@ from laissez_faire.engine import GameEngine
 from laissez_faire.terminal import TerminalUI
 from laissez_faire.llm import LLMProvider
 
-def main():
+def run_game(scenario_path, config_path="config.json"):
     """
-    The main entry point for the Laissez-faire game.
+    Runs the Laissez-faire game with a given scenario and configuration.
+
+    :param scenario_path: The path to the scenario JSON file.
+    :param config_path: The path to the configuration JSON file.
     """
     # Load global LLM provider configurations
     try:
-        with open("config.json", "r") as f:
+        with open(config_path, "r") as f:
             config = json.load(f)
         llm_providers_config = config.get("providers", {})
     except FileNotFoundError:
-        print("Warning: config.json not found. Using default 'local' provider.")
+        print(f"Warning: {config_path} not found. Using default 'local' provider.")
         llm_providers_config = {"local": {}}
-
-    scenario_path = "laissez_faire/scenarios/cold_war.json"
 
     # Load the scenario
     with open(scenario_path, 'r') as f:
@@ -56,6 +57,12 @@ def main():
 
     # Run the game
     engine.run(ui=ui)
+
+def main():
+    """
+    The main entry point for the Laissez-faire game.
+    """
+    run_game("laissez_faire/scenarios/cold_war.json")
 
 if __name__ == "__main__":
     main()

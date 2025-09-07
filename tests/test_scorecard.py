@@ -72,3 +72,32 @@ def test_scorecard_render_json():
     scorecard.data = {"Player1": {"score": 100}, "Player2": {"score": 50}}
     rendered = scorecard.render()
     assert json.loads(rendered) == {"Player1": {"score": 100}, "Player2": {"score": 50}}
+
+def test_scorecard_update_absolute_score(scenario_template):
+    """Tests updating the scorecard with an absolute score type."""
+    scenario_template["scoring_parameters"]["reputation"] = {"type": "absolute"}
+    scorecard = Scorecard(scenario_template)
+    scorecard.data = {"Player1": {"reputation": 5}}
+    new_data = {"Player1": {"reputation": 10}}
+    scorecard.update(new_data)
+    assert scorecard.data == {"Player1": {"reputation": 10}}
+
+def test_scorecard_update_complex_calculation(scenario_template):
+    """Tests updating the scorecard with a more complex calculation."""
+    scenario_template["scoring_parameters"]["score"] = {
+        "type": "calculated",
+        "calculation": "(current_value * 0.5) + llm_judgement"
+    }
+    scorecard = Scorecard(scenario_template)
+    scorecard.data = {"Player1": {"score": 20}}
+    new_data = {"Player1": {"score": 5}}
+    scorecard.update(new_data)
+    assert scorecard.data == {"Player1": {"score": 15.0}}
+
+def test_scorecard_render_complex_template(scenario_template):
+    """Tests rendering the scorecard with a more complex template."""
+    scenario_template["scorecard"]["template"] = "Scores:\nPlayer1: {Player1.score}\nPlayer2: {Player2.score}\nPlayer1 again: {Player1.score}"
+    scorecard = Scorecard(scenario_template)
+    scorecard.data = {"Player1": {"score": 100}, "Player2": {"score": 50}}
+    rendered = scorecard.render()
+    assert rendered == "Scores:\nPlayer1: 100\nPlayer2: 50\nPlayer1 again: 100"

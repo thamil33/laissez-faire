@@ -77,3 +77,54 @@ def test_unsupported_model():
     provider = LLMProvider(model="unsupported_model")
     with pytest.raises(ValueError, match="Unsupported LLM model: unsupported_model"):
         provider.get_response("player1", "test prompt")
+
+def test_get_or_create_history():
+    """
+    Tests that a conversation history can be retrieved or created.
+    """
+    provider = LLMProvider()
+    history = provider.get_or_create_history("player1", "system prompt")
+    assert history == [{"role": "system", "content": "system prompt"}]
+
+    history2 = provider.get_or_create_history("player1")
+    assert history2 == history
+
+def test_get_or_create_history_no_prompt():
+    """
+    Tests that a conversation history can be created without a system prompt.
+    """
+    provider = LLMProvider()
+    history = provider.get_or_create_history("player2")
+    assert history == []
+
+@patch('openai.OpenAI')
+def test_summarize_history(mock_openai_class):
+    """
+    Tests that the history summarization is triggered and works correctly.
+    """
+    api_key = "test_api_key"
+    player_name = "player1"
+    system_prompt = "You are a helpful assistant."
+    summarization_response = "This is a summary."
+
+    # Mock the response from the openai library
+    mock_response = MagicMock()
+    mock_response.choices = [MagicMock()]
+    mock_response.choices[0].message.content = summarization_response
+
+    mock_instance = MagicMock()
+    mock_instance.chat.completions.create.return_value = mock_response
+    mock_openai_class.return_value = mock_instance
+
+    provider = LLMProvider(model="openai", api_key=api_key, max_history_length=3)
+    provider.get_or_create_history(player_name, system_prompt)
+
+    # Add messages to exceed the history length
+    for i in range(4):
+        provider.get_response(player_name, f"message {i}")
+
+    # Check that the history was summarized
+    history = provider.histories[player_name]
+    assert len(history) == 4
+    assert "Summary of previous events" in provider.histories[player_name][1]['content']
+    assert mock_instance.chat.completions.create.call_count == 6

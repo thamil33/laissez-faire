@@ -26,7 +26,7 @@ The ultimate goal of Laissez-faire is to be a "universe in a box"—a tool for c
 
 ## Key Features
 
-*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI, OpenRouter, and local models run via Ollama or LM Studio.
+*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI, OpenRouter, and local models run via LM Studio.
 *   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games. See the [Scenario Creation Guide](docs/scenarios.md) for more details.
 *   **Flexible Scorecards:** The engine features a flexible scorecard system that can be customized for each scenario. Scorecards can be text-based for display in the terminal or JSON-based for integration with external GUIs.
 *   **Save and Load:** The engine supports saving and loading game states, allowing you to continue your game later.
@@ -67,7 +67,7 @@ To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` in
     cp config.example.json config.json
     ```
 
-    Now, open `config.json` and edit it to match your setup. The file contains a dictionary of "providers." The game scenarios will reference these providers by name (e.g., `"openai"`, `"openrouter"`, `"ollama"`).
+    Now, open `config.json` and edit it to match your setup. The file contains a dictionary of "providers." The game scenarios will reference these providers by name (e.g., `"openai"`, `"openrouter"`).
 
     **Example `config.json`:**
     ```json
@@ -85,12 +85,6 @@ To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` in
           "api_key": "YOUR_OPENROUTER_API_KEY",
           "base_url": "https://openrouter.ai/api/v1"
         },
-        "ollama": {
-          "model": "ollama",
-          "model_name": "llama3",
-          "api_key": "ollama",
-          "base_url": "http://localhost:11434/v1"
-        },
         "lm_studio": {
           "model": "openai",
           "model_name": "local-model",
@@ -103,10 +97,10 @@ To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` in
 
     #### Connecting to OpenAI-Compatible Services
 
-    Any service that provides an OpenAI-compatible API can be used. This includes **OpenRouter**, **Ollama**, and **LM Studio**.
+    Any service that provides an OpenAI-compatible API can be used. This includes **OpenRouter** and **LM Studio**.
 
-    1.  **Set the `model` parameter**: This should be set to `"openai"` or `"ollama"` to use the correct logic in the game engine.
-    2.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`, `"llama3"`).
+    1.  **Set the `model` parameter**: This should be set to `"openai"` to use the correct logic in the game engine.
+    2.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`).
     3.  **Set your `api_key`**: Add your API key for the service.
     4.  **Set the `base_url`**: Provide the server address for the API.
 

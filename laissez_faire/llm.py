@@ -47,14 +47,16 @@ class LLMProvider:
         :return: The LLM's response as a string.
         """
         history = self.get_or_create_history(player_name)
-        history.append({"role": "user", "content": prompt})
 
-        # Summarize history if it's too long
+        # Summarize history if it's too long, before adding the new prompt
         self.summarize_history(player_name)
+        history = self.get_or_create_history(player_name)
+
+        history.append({"role": "user", "content": prompt})
 
         if self.model == "local":
             response_content = self._get_response_local(history)
-        elif self.model == "openai" or self.model == "ollama":
+        elif self.model == "openai":
             response_content = self._get_response_openai(history)
         else:
             raise ValueError(f"Unsupported LLM model: {self.model}")
