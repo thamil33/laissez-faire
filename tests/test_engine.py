@@ -128,7 +128,7 @@ def test_scoring_system_and_prompt_generation(mock_llm_provider):
     # Test prompt generation
     # The mock was called 3 times. The first call was for Einstein's action.
     einstein_prompt = mock_llm_provider.get_response.call_args_list[0][0][0]
-    assert "You are Albert Einstein" in einstein_prompt
+    assert "You are playing the role of Albert Einstein." in einstein_prompt
     assert "Topic: The role of intuition versus rigorous analysis" in einstein_prompt
     assert "Your Status:" in einstein_prompt
     assert "Field: Theoretical Physics" in einstein_prompt
@@ -137,6 +137,6 @@ def test_scoring_system_and_prompt_generation(mock_llm_provider):
 
     # The second call was for Jobs' action.
     jobs_prompt = mock_llm_provider.get_response.call_args_list[1][0][0]
-    assert "You are Steve Jobs" in jobs_prompt
+    assert "You are playing the role of Steve Jobs." in jobs_prompt
     assert "Famous For: Apple Inc., iPhone" in jobs_prompt
     assert "Einstein:" in jobs_prompt

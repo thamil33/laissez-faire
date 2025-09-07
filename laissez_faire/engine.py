@@ -150,42 +150,44 @@ class GameEngine:
         This version is more general and data-driven.
         """
         scenario = self.scenario
-        player_entity_key = scenario.get("player_entity_key", "countries") # e.g., "countries", "debaters"
+        player_entity_key = scenario.get("player_entity_key", "countries")
         player_entities = scenario.get(player_entity_key, {})
 
-        player_entity_name = player.get("controls") # The name of the entity the player controls
+        player_entity_name = player.get("controls")
         if not player_entity_name:
-            # Fallback for older scenario format
             player_entity_name = player.get("country")
 
         player_entity_data = player_entities.get(player_entity_name, {})
 
-        prompt = f"You are {player['name']}.\n"
-        prompt += f"It is turn {self.turn}.\n"
-        prompt += f"Scenario: {scenario['description']}\n\n"
+        # New: Check for a detailed, LLM-facing prompt
+        llm_prompt = player.get("ai_prompt", {}).get("llm_facing")
+        if llm_prompt:
+            prompt = llm_prompt
+            prompt += f"\n\nCurrent Turn: {self.turn}"
+            prompt += f"\nScenario: {scenario['description']}"
+        else:
+            # Fallback to the original prompt generation
+            prompt = f"You are {player['name']}.\n"
+            prompt += f"It is turn {self.turn}.\n"
+            prompt += f"Scenario: {scenario['description']}\n\n"
 
-        # Display global parameters
+        # Add dynamic context to the prompt
         if "parameters" in scenario and scenario["parameters"]:
-            prompt += "Global Context:\n"
+            prompt += "\n\nGlobal Context:\n"
             for key, value in scenario["parameters"].items():
                 prompt += f"  - {key.replace('_', ' ').title()}: {value}\n"
-            prompt += "\n"
 
-        # Display player's entity status
         if player_entity_data:
-            prompt += "Your Status:\n"
+            prompt += "\nYour Status:\n"
             for key, value in player_entity_data.items():
                 prompt += f"  - {key.replace('_', ' ').title()}: {value}\n"
-            prompt += "\n"
 
-        # Display other entities
         if player_entities:
-            prompt += "Other Participants:\n"
+            prompt += "\nOther Participants:\n"
             for entity_name, entity_data in player_entities.items():
                 if entity_name != player_entity_name:
                     prompt += f"  - {entity_name}:\n"
-                    # A more advanced implementation could have a "public_attributes" key in the scenario.
-                    for key, value in list(entity_data.items())[:3]: # Show first 3 attributes
+                    for key, value in list(entity_data.items())[:3]:
                         prompt += f"    - {key.replace('_', ' ').title()}: {value}\n"
 
         prompt += "\nWhat is your next move or statement?"
