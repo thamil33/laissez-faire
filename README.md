@@ -54,11 +54,10 @@ pytest
 
 ## To-Do
 
-*   [ ] Create detailed documentation for users and developers.
-*   [ ] Package the project for distribution (e.g., PyPI).
-*   [ ] Explore options for a graphical front-end that can use the engine.
 *   [ ] Add more complex scenarios and events.
 *   [ ] Implement more advanced AI behaviors for non-player characters.
+*   [ ] Create detailed documentation for users and developers.
+*   [ ] Package the project for distribution (e.g., PyPI).
 
 ## License
 
