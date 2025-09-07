@@ -6,6 +6,27 @@ from laissez_faire.llm import LLMProvider
 from rich.console import Console
 from rich.prompt import Prompt
 
+def get_safe_path(base_dir, filename):
+    """
+    Joins a base directory and a filename, and ensures the resulting path is
+    within the base directory.
+    """
+    # Sanitize the filename to prevent directory traversal
+    if ".." in filename or filename.startswith("/"):
+        print(f"Error: Invalid filename '{filename}'.")
+        return None
+
+    # Get the absolute path of the base directory and the intended file
+    base_dir_abs = os.path.abspath(base_dir)
+    file_path_abs = os.path.abspath(os.path.join(base_dir_abs, filename))
+
+    # Check if the file path is within the base directory
+    if os.path.commonpath([base_dir_abs, file_path_abs]) != base_dir_abs:
+        print(f"Error: Path traversal attempt detected for filename '{filename}'.")
+        return None
+
+    return file_path_abs
+
 def get_providers(config_path="config.json"):
     """
     Loads LLM provider configurations from a file.
@@ -18,7 +39,7 @@ def get_providers(config_path="config.json"):
         print(f"Warning: {config_path} not found. Using default 'local' provider.")
         return {"local": {}}
 
-def create_llm_provider(provider_name, llm_providers_config):
+def create_llm_provider(provider_name, llm_providers_config, summarizer_provider=None):
     """
     Helper function to create a single LLM provider.
     """
@@ -26,7 +47,8 @@ def create_llm_provider(provider_name, llm_providers_config):
     return LLMProvider(
         model=provider_config.get("model", "local"),
         api_key=provider_config.get("api_key"),
-        base_url=provider_config.get("base_url")
+        base_url=provider_config.get("base_url"),
+        summarizer_provider=summarizer_provider
     )
 
 def start_new_game(scenario_path, config_path="config.json"):
@@ -35,17 +57,21 @@ def start_new_game(scenario_path, config_path="config.json"):
     """
     llm_providers_config = get_providers(config_path)
 
-    with open(scenario_path, 'r') as f:
-        scenario = json.load(f)
+    try:
+        with open(scenario_path, 'r') as f:
+            scenario = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading scenario file: {e}")
+        return
+
+    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
+    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
 
     llm_providers = {}
     for player in scenario.get("players", []):
         if player.get("type") == "ai":
             provider_name = player.get("llm_provider", "local")
-            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config)
-
-    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
-    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
+            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
 
     engine = GameEngine(
         llm_providers=llm_providers,
@@ -65,18 +91,22 @@ def load_saved_game(save_path, config_path="config.json"):
     """
     llm_providers_config = get_providers(config_path)
 
-    with open(save_path, 'r') as f:
-        game_state = json.load(f)
+    try:
+        with open(save_path, 'r') as f:
+            game_state = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading save file: {e}")
+        return
     scenario = game_state["scenario"]
+
+    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
+    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
 
     llm_providers = {}
     for player in scenario.get("players", []):
         if player.get("type") == "ai":
             provider_name = player.get("llm_provider", "local")
-            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config)
-
-    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
-    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
+            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
 
     engine = GameEngine(
         llm_providers=llm_providers,
@@ -95,8 +125,12 @@ def replay_game(save_path):
     """
     Replays a game from a save file.
     """
-    with open(save_path, 'r') as f:
-        game_state = json.load(f)
+    try:
+        with open(save_path, 'r') as f:
+            game_state = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"Error loading save file for replay: {e}")
+        return
 
     scenario = game_state["scenario"]
     history = game_state["history"]
@@ -133,7 +167,9 @@ def main():
         scenarios_dir = "laissez_faire/scenarios"
         scenarios = [f for f in os.listdir(scenarios_dir) if f.endswith(".json")]
         scenario_choice = Prompt.ask("Choose a scenario", choices=scenarios)
-        start_new_game(os.path.join(scenarios_dir, scenario_choice))
+        safe_path = get_safe_path(scenarios_dir, scenario_choice)
+        if safe_path:
+            start_new_game(safe_path)
 
     elif choice == "Load a saved game":
         saves_dir = "saves"
@@ -142,7 +178,9 @@ def main():
             return
         saves = [f for f in os.listdir(saves_dir) if f.endswith(".json")]
         save_choice = Prompt.ask("Choose a save file", choices=saves)
-        load_saved_game(os.path.join(saves_dir, save_choice))
+        safe_path = get_safe_path(saves_dir, save_choice)
+        if safe_path:
+            load_saved_game(safe_path)
 
     elif choice == "Replay a saved game":
         saves_dir = "saves"
@@ -151,7 +189,9 @@ def main():
             return
         saves = [f for f in os.listdir(saves_dir) if f.endswith(".json")]
         save_choice = Prompt.ask("Choose a save file to replay", choices=saves)
-        replay_game(os.path.join(saves_dir, save_choice))
+        safe_path = get_safe_path(saves_dir, save_choice)
+        if safe_path:
+            replay_game(safe_path)
 
 if __name__ == "__main__":
     main()

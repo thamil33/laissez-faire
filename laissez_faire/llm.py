@@ -7,7 +7,7 @@ class LLMProvider:
     conversation history.
     """
 
-    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10, model_name="gpt-3.5-turbo"):
+    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10, model_name="gpt-3.5-turbo", summarizer_provider=None):
         """
         Initializes the LLM provider.
 
@@ -16,6 +16,7 @@ class LLMProvider:
         :param base_url: The base URL for the LLM service (for local models).
         :param max_history_length: The maximum number of messages to keep in the history.
         :param model_name: The specific model to use (e.g., 'gpt-3.5-turbo').
+        :param summarizer_provider: An optional LLM provider for summarizing history.
         """
         self.model = model
         self.model_name = model_name
@@ -23,6 +24,7 @@ class LLMProvider:
         self.base_url = base_url
         self.histories = {}
         self.max_history_length = max_history_length
+        self.summarizer_provider = summarizer_provider
 
     def get_or_create_history(self, player_name, system_prompt=None):
         """
@@ -77,17 +79,11 @@ class LLMProvider:
             if history and history[0]["role"] == "system":
                 system_prompt = history.pop(0)
 
-            # Create the summarization prompt
-            summarization_prompt = (
-                "Please summarize the following conversation. "
-                "The summary should be concise and capture the key decisions and outcomes."
-            )
+            # Use the summarizer provider if available, otherwise use self
+            summarizer = self.summarizer_provider if self.summarizer_provider else self
 
             # Get the summary
-            summary = self._get_response_openai([
-                {"role": "system", "content": summarization_prompt},
-                {"role": "user", "content": "\n".join([f"{m['role']}: {m['content']}" for m in history])}
-            ])
+            summary = summarizer.get_response(f"summarizer_{player_name}", "\n".join([f"{m['role']}: {m['content']}" for m in history]))
 
             # Replace the history with the summary
             self.histories[player_name] = []
@@ -116,9 +112,12 @@ class LLMProvider:
             base_url=self.base_url
         )
 
-        response = client.chat.completions.create(
-            model=self.model_name,
-            messages=messages
-        )
-
-        return response.choices[0].message.content
+        try:
+            response = client.chat.completions.create(
+                model=self.model_name,
+                messages=messages
+            )
+            return response.choices[0].message.content
+        except openai.APIError as e:
+            print(f"Error from OpenAI API: {e}")
+            return "Error: Could not get a response from the model."
