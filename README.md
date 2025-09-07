@@ -48,7 +48,56 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
 
 3.  **Configure your LLM provider:**
 
-    Create a `config.json` file in the root of the project by copying the `config.example.json` file. Then, edit it to configure your desired LLM provider. For detailed instructions, see the [LLM Configuration Guide](docs/llm_configuration.md).
+    The game's LLM (Large Language Model) configuration is handled in the `config.json` file. This file centralizes your settings, such as API keys and local server URLs, so you don't have to edit the game's scenario files directly.
+
+    To get started, copy the example configuration file:
+
+    ```bash
+    cp config.example.json config.json
+    ```
+
+    Now, open `config.json` and edit it to match your setup. The file contains a dictionary of "providers." The game scenarios will reference these providers by name (e.g., `"openai"`, `"ollama"`).
+
+    **Example `config.json`:**
+    ```json
+    {
+      "providers": {
+        "local": {},
+        "openai": {
+          "model": "openai",
+          "api_key": "YOUR_OPENAI_API_KEY",
+          "base_url": null
+        },
+        "ollama": {
+          "model": "ollama",
+          "api_key": null,
+          "base_url": "http://localhost:11434"
+        },
+        "lm_studio": {
+          "model": "openai",
+          "api_key": "not-needed",
+          "base_url": "http://localhost:1234/v1"
+        }
+      }
+    }
+    ```
+
+    #### Connecting to LM Studio
+
+    1.  Start your local server in LM Studio.
+    2.  In `config.json`, the `lm_studio` provider is pre-configured for the default LM Studio server address (`http://localhost:1234/v1`).
+    3.  Scenarios can now use `"llm_provider": "lm_studio"` to have AI players use your local model.
+
+    #### Connecting to Ollama
+
+    1.  Make sure your Ollama server is running.
+    2.  The `ollama` provider in `config.json` is pre-configured for the default Ollama address (`http://localhost:11434`).
+    3.  Scenarios can now use `"llm_provider": "ollama"` to have AI players use your local model.
+
+    #### Connecting to OpenAI
+
+    1.  Add your OpenAI API key to the `api_key` field for the `openai` provider in `config.json`.
+    2.  Scenarios can use `"llm_provider": "openai"` to have AI players use the OpenAI API.
 
 4.  **Run the game:**
 

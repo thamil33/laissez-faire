@@ -7,38 +7,40 @@ def main():
     """
     The main entry point for the Laissez Faire game.
     """
-    # Load configuration
+    # Load global LLM provider configurations
     try:
         with open("config.json", "r") as f:
             config = json.load(f)
+        llm_providers_config = config.get("providers", {})
     except FileNotFoundError:
-        config = {}
+        print("Warning: config.json not found. Using default 'local' provider.")
+        llm_providers_config = {"local": {}}
 
     scenario_path = "laissez_faire/scenarios/cold_war.json"
 
-    # Load the scenario to get LLM configurations
+    # Load the scenario
     with open(scenario_path, 'r') as f:
         scenario = json.load(f)
+
+    # Helper function to create a provider
+    def create_llm_provider(provider_name):
+        provider_config = llm_providers_config.get(provider_name, {})
+        return LLMProvider(
+            model=provider_config.get("model", "local"),
+            api_key=provider_config.get("api_key"),
+            base_url=provider_config.get("base_url")
+        )
 
     # Create LLM providers for each AI player
     llm_providers = {}
     for player in scenario.get("players", []):
         if player.get("type") == "ai":
-            llm_config = player.get("llm_config", {})
-            provider = LLMProvider(
-                model=llm_config.get("model", "local"),
-                api_key=llm_config.get("api_key"),
-                base_url=llm_config.get("base_url")
-            )
-            llm_providers[player["name"]] = provider
+            provider_name = player.get("llm_provider", "local")
+            llm_providers[player["name"]] = create_llm_provider(provider_name)
 
     # Create LLM provider for the scorer
-    scorer_llm_config = scenario.get("scorer_llm_config", {})
-    scorer_llm_provider = LLMProvider(
-        model=scorer_llm_config.get("model", "local"),
-        api_key=scorer_llm_config.get("api_key"),
-        base_url=scorer_llm_config.get("base_url")
-    )
+    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
+    scorer_llm_provider = create_llm_provider(scorer_provider_name)
 
     # Initialize the game engine and terminal UI
     engine = GameEngine(
