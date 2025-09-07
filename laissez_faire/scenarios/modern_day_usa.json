@@ -1,0 +1,23 @@
+{
+  "name": "Modern Day USA",
+  "description": "A simulation of the United States in the modern day.",
+  "start_date": "2024-01-01",
+  "players": [
+    {
+      "name": "President of the United States",
+      "type": "human",
+      "country": "USA"
+    },
+    {
+      "name": "President of China",
+      "type": "ai",
+      "country": "China",
+      "llm_provider": "local"
+    }
+  ],
+  "parameters": {
+    "economic_stability": 0.8,
+    "political_stability": 0.6,
+    "military_strength": 0.9
+  }
+}
