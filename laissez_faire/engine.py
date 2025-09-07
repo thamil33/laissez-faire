@@ -1,6 +1,8 @@
 import json
 import re
 import os
+import operator
+
 from .llm import LLMProvider
 
 class Scorecard:
@@ -11,6 +13,55 @@ class Scorecard:
         self.template = scenario.get("scorecard", {})
         self.scoring_parameters = scenario.get("scoring_parameters", {})
         self.data = {}
+
+    def _safe_eval(self, expr, context):
+        """
+        A safe evaluator for simple arithmetic expressions.
+        """
+        # Allowed operators
+        ops = {
+            '+': operator.add,
+            '-': operator.sub,
+            '*': operator.mul,
+            '/': operator.truediv
+        }
+
+        # remove parentheses
+        expr = expr.replace("(", "").replace(")", "")
+        # Regular expression to safely parse the expression
+        # This will split the expression by operators, keeping the operators
+        parts = re.split(r' *([+\-*/]) *', expr)
+
+        # The first part should be a variable or a number
+        try:
+            # Get the value from the context or parse it as a float
+            if parts[0] in context:
+                acc = context[parts[0]]
+            else:
+                acc = float(parts[0])
+        except (ValueError, KeyError):
+            raise ValueError(f"Invalid expression: unknown variable or number {parts[0]}")
+
+        # Process the rest of the parts (operator and operand)
+        for i in range(1, len(parts), 2):
+            op_str = parts[i]
+            operand_str = parts[i+1]
+
+            if op_str not in ops:
+                raise ValueError(f"Unsupported operator: {op_str}")
+
+            try:
+                if operand_str in context:
+                    operand = context[operand_str]
+                else:
+                    operand = float(operand_str)
+            except (ValueError, KeyError):
+                raise ValueError(f"Invalid expression: unknown variable or number {operand_str}")
+
+            # Perform the operation
+            acc = ops[op_str](acc, operand)
+
+        return acc
 
     def update(self, llm_scores):
         """
@@ -32,13 +83,15 @@ class Scorecard:
                     calculation = config.get("calculation")
                     current_value = self.data[player].get(score_name, 0)
 
-                    # This is a simple and unsafe eval. A real implementation
-                    # should use a proper expression parser.
-                    new_value = eval(calculation, {
-                        "current_value": current_value,
-                        "llm_judgement": value
-                    })
-                    self.data[player][score_name] = new_value
+                    try:
+                        new_value = self._safe_eval(calculation, {
+                            "current_value": current_value,
+                            "llm_judgement": value
+                        })
+                        self.data[player][score_name] = new_value
+                    except ValueError as e:
+                        print(f"Error calculating score for {score_name}: {e}")
+
 
     def render(self):
         """
