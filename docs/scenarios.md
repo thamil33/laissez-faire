@@ -1,6 +1,6 @@
 # Scenario Creation Guide
 
-This guide explains how to create your own scenarios for the Laissez Faire game engine. Scenarios are defined in JSON files located in the `laissez_faire/scenarios/` directory.
+This guide explains how to create your own scenarios for the Laissez-faire game engine. Scenarios are defined in JSON files located in the `laissez_faire/scenarios/` directory.
 
 ## Scenario Structure
 
