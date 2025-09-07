@@ -63,14 +63,6 @@ export PYTHONPATH=.
 pytest
 ```
 
-## To-Do
-
-*   [x] Add more complex scenarios and events.
-*   [x] Implement more advanced AI behaviors for non-player characters.
-*   [x] Create detailed documentation for users and developers.
-*   [ ] Implement game mechanics for state changes (e.g., economic stability changing based on AI actions).
-*   [ ] Package the project for distribution (e.g., PyPI).
-
 ## License
 
 This project is licensed under the GPLv3 License. See the `LICENSE` file for details.
