@@ -140,3 +140,49 @@ def test_scoring_system_and_prompt_generation(mock_llm_provider):
     assert "You are playing the role of Steve Jobs." in jobs_prompt
     assert "Famous For: Apple Inc., iPhone" in jobs_prompt
     assert "Einstein:" in jobs_prompt
+
+def test_run_with_no_ai_players(mock_llm_provider, capsys):
+    """
+    Tests that the game can run without any AI players.
+    """
+    # Create a scenario with no AI players
+    scenario = {
+        "name": "No AI Scenario",
+        "players": [{"name": "Human", "type": "human"}]
+    }
+    scenario_path = "no_ai_scenario.json"
+    with open(scenario_path, "w") as f:
+        json.dump(scenario, f)
+
+    engine = GameEngine(scenario_path, llm_provider=mock_llm_provider)
+    engine.run(max_turns=1)
+
+    # Check that the LLM was not called
+    mock_llm_provider.get_response.assert_not_called()
+
+    # Check the output
+    captured = capsys.readouterr()
+    assert "No AI players found" in captured.out
+
+    os.remove(scenario_path)
+
+def test_score_turn_invalid_json(mock_llm_provider, capsys):
+    """
+    Tests that the engine handles invalid JSON from the LLM during scoring.
+    """
+    scenario_path = "laissez_faire/scenarios/philosophers_debate.json"
+    engine = GameEngine(scenario_path, llm_provider=mock_llm_provider)
+
+    # Simulate the LLM returning invalid JSON for scores
+    mock_llm_provider.get_response.side_effect = [
+        "Einstein's action",
+        "Jobs' action",
+        "this is not json"
+    ]
+
+    engine.run(max_turns=1)
+
+    # Check that the error was logged and the scorecard was not updated
+    captured = capsys.readouterr()
+    assert "Error: Could not decode scores from LLM response." in captured.out
+    assert engine.scorecard.data == {}
