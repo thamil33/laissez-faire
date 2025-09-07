@@ -31,6 +31,10 @@
     "relevance": "How well the arguments stick to the topic of innovation and intuition.",
     "logic": "The strength and coherence of the reasoning."
   },
+  "scorecard": {
+    "type": "text",
+    "template": "Debate Progress:\n\nEinstein vs. Jobs\n\n{Einstein.eloquence} [red]<-[/red] Eloquence [green]->[/green] {Jobs.eloquence}\n{Einstein.originality} [red]<-[/red] Originality [green]->[/green] {Jobs.originality}\n{Einstein.relevance} [red]<-[/red] Relevance [green]->[/green] {Jobs.relevance}\n{Einstein.logic} [red]<-[/red] Logic [green]->[/green] {Jobs.logic}\n"
+  },
   "parameters": {
     "topic": "The role of intuition versus rigorous analysis in driving true innovation."
   }

@@ -36,30 +36,14 @@ class TerminalUI:
 
         self.console.print(table)
 
-    def display_scores(self, scores):
+    def display_scores(self, scorecard):
         """
-        Displays the current scores in a table.
+        Displays the current scorecard.
         """
-        if not scores:
+        if not scorecard:
             return
 
-        table = Table(title="Current Scores")
-
-        # Get all unique score names
-        score_names = set()
-        for player_scores in scores.values():
-            score_names.update(player_scores.keys())
-
-        sorted_score_names = sorted(list(score_names))
-
-        table.add_column("Player", justify="left")
-        for score_name in sorted_score_names:
-            table.add_column(score_name.replace('_', ' ').title(), justify="center")
-
-        for player_name, player_scores in sorted(scores.items()):
-            row = [player_name]
-            for score_name in sorted_score_names:
-                row.append(str(player_scores.get(score_name, 0)))
-            table.add_row(*row)
-
-        self.console.print(table)
+        # The scorecard.render() method will return a string,
+        # which we can then print inside a panel.
+        score_output = scorecard.render()
+        self.console.print(Panel(score_output, title="Scorecard", border_style="green"))

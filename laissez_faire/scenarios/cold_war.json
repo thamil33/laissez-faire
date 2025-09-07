@@ -55,5 +55,14 @@
         "military_strength": 0.4,
         "influence": 40
     }
+  },
+  "scoring_parameters": {
+    "influence_europe": "The player's influence in Europe.",
+    "influence_asia": "The player's influence in Asia.",
+    "influence_africa": "The player's influence in Africa."
+  },
+  "scorecard": {
+    "type": "text",
+    "template": "World Influence Map:\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /                       \\\n   /     USA Influence       \\\n  /                           \\\n |     Europe: {USA.influence_europe}   Asia: {USA.influence_asia}    |\n |                           |\n |    Africa: {USA.influence_africa}      |\n |                           |\n |    USSR Influence         |\n |    Europe: {USSR.influence_europe}  Asia: {USSR.influence_asia}   |\n |   Africa: {USSR.influence_africa}       |\n  \\                         /\n   `'-.,_______________,.-'`"
   }
 }

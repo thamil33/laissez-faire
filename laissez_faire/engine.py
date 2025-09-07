@@ -1,5 +1,47 @@
 import json
+import re
 from .llm import LLMProvider
+
+class Scorecard:
+    """
+    Manages the scorecard for the game.
+    """
+    def __init__(self, template):
+        self.template = template
+        self.data = {}
+
+    def update(self, new_data):
+        """
+        Updates the scorecard data.
+        """
+        for player, scores in new_data.items():
+            if player not in self.data:
+                self.data[player] = {}
+            for score, value in scores.items():
+                if score in self.data[player]:
+                    self.data[player][score] += value
+                else:
+                    self.data[player][score] = value
+
+    def render(self):
+        """
+        Renders the scorecard based on the template.
+        """
+        if self.template['type'] == 'json':
+            return json.dumps(self.data, indent=2)
+
+        output = self.template['template']
+
+        # Use a regular expression to find all placeholders, e.g., {Player.score}
+        placeholders = re.findall(r'\{(\w+)\.(\w+)\}', output)
+
+        for player, score in placeholders:
+            # Get the value from the data, defaulting to 0 if not found
+            value = self.data.get(player, {}).get(score, 0)
+            # Replace the placeholder with the value
+            output = output.replace(f'{{{player}.{score}}}', str(value))
+
+        return output
 
 class GameEngine:
     """
@@ -17,7 +59,9 @@ class GameEngine:
         self.event_handlers = {}
         self.llm_provider = llm_provider
         self.history = []
-        self.scores = {}
+        self.scorecard = None
+        if "scorecard" in self.scenario:
+            self.scorecard = Scorecard(self.scenario["scorecard"])
 
     def load_scenario(self, scenario_path):
         """
@@ -88,7 +132,9 @@ class GameEngine:
                     })
 
             # Score the turn at the end
-            self.score_turn(ui=ui)
+            self.score_turn()
+            if ui and self.scorecard:
+                ui.display_scores(self.scorecard)
 
         print("Game simulation finished.")
 
@@ -145,10 +191,13 @@ class GameEngine:
         prompt += "\nWhat is your next move or statement?"
         return prompt
 
-    def score_turn(self, ui=None):
+    def score_turn(self):
         """
         Scores the current turn using the LLM.
         """
+        if not self.scorecard:
+            return
+
         print("\n--- Scoring Turn ---")
         scoring_prompt = self.generate_scoring_prompt()
         if not scoring_prompt:
@@ -161,18 +210,9 @@ class GameEngine:
 
         try:
             new_scores = json.loads(scores_str)
-            # Update the main scores dictionary
-            for player_name, player_scores in new_scores.items():
-                if player_name not in self.scores:
-                    self.scores[player_name] = {}
-                for score_name, score_value in player_scores.items():
-                    # For simplicity, we'll just add the new score to the old one
-                    self.scores[player_name][score_name] = self.scores[player_name].get(score_name, 0) + score_value
+            self.scorecard.update(new_scores)
         except (json.JSONDecodeError, TypeError):
             print("Error: Could not decode scores from LLM response.")
-
-        if ui and self.scores:
-            ui.display_scores(self.scores)
 
     def generate_scoring_prompt(self):
         """
@@ -186,6 +226,9 @@ class GameEngine:
         prompt = "You are an impartial judge. Based on the history of actions below, please score each player on the following criteria:\n"
         for param, desc in scoring_params.items():
             prompt += f"  - {param.replace('_', ' ').title()}: {desc}\n"
+
+        player_names = [p["controls"] for p in self.scenario.get("players", [])]
+        prompt += f"\nPlease return the scores for the players: {', '.join(player_names)}.\n"
 
         prompt += "\nReturn the scores in a JSON format, like this: {\"player_name\": {\"score1\": value, \"score2\": value}}.\n"
 
