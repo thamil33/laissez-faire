@@ -34,13 +34,29 @@
     }
   },
   "scoring_parameters": {
-    "economy_score": "The overall economic strength of the empire.",
-    "technology_score": "The level of technological advancement.",
-    "military_power": "The total strength of the empire's fleet.",
-    "diplomatic_weight": "The empire's influence in the galactic community."
+    "economy_score": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in the economy score for each empire."
+    },
+    "technology_score": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in the technology score for each empire."
+    },
+    "military_power": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in military power for each empire."
+    },
+    "diplomatic_weight": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in diplomatic weight for each empire."
+    }
   },
   "scorecard": {
-    "type": "json"
+    "render_type": "json"
   },
   "parameters": {
     "galaxy_size": "Medium",

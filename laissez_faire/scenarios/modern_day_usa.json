@@ -39,13 +39,29 @@
     "world_tension": 0.3
   },
   "scoring_parameters": {
-    "influence_americas": "Influence in the Americas.",
-    "influence_europe": "Influence in Europe.",
-    "influence_asia": "Influence in Asia.",
-    "influence_africa": "Influence in Africa."
+    "influence_americas": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in the Americas for each country."
+    },
+    "influence_europe": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Europe for each country."
+    },
+    "influence_asia": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Asia for each country."
+    },
+    "influence_africa": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Africa for each country."
+    }
   },
   "scorecard": {
-    "type": "text",
+    "render_type": "text",
     "template": "World Influence Map:\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /                       \\\n   /     USA Influence       \\\n  /                           \\\n |  Americas: {USA.influence_americas} Europe: {USA.influence_europe}   |\n |  Asia: {USA.influence_asia}    Africa: {USA.influence_africa}      |\n |                           |\n |    China Influence        |\n |  Americas: {China.influence_americas} Europe: {China.influence_europe} |\n |  Asia: {China.influence_asia}    Africa: {China.influence_africa}     |\n  \\                         /\n   `'-.,_______________,.-'`"
   }
 }

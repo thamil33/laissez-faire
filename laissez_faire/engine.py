@@ -6,39 +6,52 @@ class Scorecard:
     """
     Manages the scorecard for the game.
     """
-    def __init__(self, template):
-        self.template = template
+    def __init__(self, scenario):
+        self.template = scenario.get("scorecard", {})
+        self.scoring_parameters = scenario.get("scoring_parameters", {})
         self.data = {}
 
-    def update(self, new_data):
+    def update(self, llm_scores):
         """
-        Updates the scorecard data.
+        Updates the scorecard data based on the LLM's scores.
         """
-        for player, scores in new_data.items():
+        for player, scores in llm_scores.items():
             if player not in self.data:
                 self.data[player] = {}
-            for score, value in scores.items():
-                if score in self.data[player]:
-                    self.data[player][score] += value
-                else:
-                    self.data[player][score] = value
+
+            for score_name, value in scores.items():
+                config = self.scoring_parameters.get(score_name)
+                if not config:
+                    continue
+
+                score_type = config.get("type")
+                if score_type == "absolute":
+                    self.data[player][score_name] = value
+                elif score_type == "calculated":
+                    calculation = config.get("calculation")
+                    current_value = self.data[player].get(score_name, 0)
+
+                    # This is a simple and unsafe eval. A real implementation
+                    # should use a proper expression parser.
+                    new_value = eval(calculation, {
+                        "current_value": current_value,
+                        "llm_judgement": value
+                    })
+                    self.data[player][score_name] = new_value
 
     def render(self):
         """
         Renders the scorecard based on the template.
         """
-        if self.template['type'] == 'json':
+        render_type = self.template.get("render_type", "text")
+        if render_type == 'json':
             return json.dumps(self.data, indent=2)
 
-        output = self.template['template']
+        output = self.template.get('template', '')
 
-        # Use a regular expression to find all placeholders, e.g., {Player.score}
         placeholders = re.findall(r'\{(\w+)\.(\w+)\}', output)
-
         for player, score in placeholders:
-            # Get the value from the data, defaulting to 0 if not found
             value = self.data.get(player, {}).get(score, 0)
-            # Replace the placeholder with the value
             output = output.replace(f'{{{player}.{score}}}', str(value))
 
         return output
@@ -61,7 +74,16 @@ class GameEngine:
         self.history = []
         self.scorecard = None
         if "scorecard" in self.scenario:
-            self.scorecard = Scorecard(self.scenario["scorecard"])
+            self.scorecard = Scorecard(self.scenario)
+            # Initialize the scorecard with data from the scenario
+            player_entity_key = self.scenario.get("player_entity_key")
+            if player_entity_key and player_entity_key in self.scenario:
+                initial_data = self.scenario[player_entity_key]
+                for player, data in initial_data.items():
+                    if player not in self.scorecard.data:
+                        self.scorecard.data[player] = {}
+                    for key, value in data.items():
+                        self.scorecard.data[player][key] = value
 
     def load_scenario(self, scenario_path):
         """
@@ -211,8 +233,8 @@ class GameEngine:
         print(f"LLM Scores: {scores_str}")
 
         try:
-            new_scores = json.loads(scores_str)
-            self.scorecard.update(new_scores)
+            llm_scores = json.loads(scores_str)
+            self.scorecard.update(llm_scores)
         except (json.JSONDecodeError, TypeError):
             print("Error: Could not decode scores from LLM response.")
 
@@ -226,8 +248,8 @@ class GameEngine:
             return None
 
         prompt = "You are an impartial judge. Based on the history of actions below, please score each player on the following criteria:\n"
-        for param, desc in scoring_params.items():
-            prompt += f"  - {param.replace('_', ' ').title()}: {desc}\n"
+        for score_name, config in scoring_params.items():
+            prompt += f"  - {score_name}: {config.get('prompt', '')}\n"
 
         player_names = [p["controls"] for p in self.scenario.get("players", [])]
         prompt += f"\nPlease return the scores for the players: {', '.join(player_names)}.\n"
@@ -235,7 +257,6 @@ class GameEngine:
         prompt += "\nReturn the scores in a JSON format, like this: {\"player_name\": {\"score1\": value, \"score2\": value}}.\n"
 
         prompt += "\n--- History of Actions ---\n"
-        # For now, just use the most recent history to avoid making the prompt too long.
         recent_history = [h for h in self.history if h['turn'] == self.turn]
         for event in recent_history:
             prompt += f"Turn {event['turn']}, {event['player']}: {event['action']}\n"
