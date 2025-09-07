@@ -113,7 +113,7 @@ def test_scoring_system_and_prompt_generation(mock_llm_provider):
     mock_llm_provider.get_response.side_effect = [
         "Einstein's opening statement.",
         "Jobs' counter-argument.",
-        '{"Albert Einstein": {"eloquence": 1, "logic": 2}, "Steve Jobs": {"eloquence": 2, "logic": 1}}'
+        '{"Einstein": {"eloquence": 1, "logic": 2}, "Jobs": {"eloquence": 2, "logic": 1}}'
     ]
 
     mock_ui = Mock()
@@ -121,9 +121,9 @@ def test_scoring_system_and_prompt_generation(mock_llm_provider):
     engine.run(max_turns=1, ui=mock_ui)
 
     # Test scoring
-    assert engine.scores["Albert Einstein"]["eloquence"] == 1
-    assert engine.scores["Steve Jobs"]["logic"] == 1
-    mock_ui.display_scores.assert_called_once_with(engine.scores)
+    assert engine.scorecard.data["Einstein"]["eloquence"] == 1
+    assert engine.scorecard.data["Jobs"]["logic"] == 1
+    mock_ui.display_scores.assert_called_once_with(engine.scorecard)
 
     # Test prompt generation
     # The mock was called 3 times. The first call was for Einstein's action.

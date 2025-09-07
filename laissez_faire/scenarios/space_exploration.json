@@ -1,0 +1,41 @@
+{
+  "name": "Space Exploration",
+  "description": "A grand strategy game set in space, inspired by Stellaris.",
+  "start_date": "2200-01-01",
+  "player_entity_key": "empires",
+  "players": [
+    {
+      "name": "Galactic Imperium",
+      "type": "ai",
+      "controls": "Imperium"
+    },
+    {
+      "name": "Stellar Republic",
+      "type": "ai",
+      "controls": "Republic"
+    }
+  ],
+  "empires": {
+    "Imperium": {
+      "government_type": "Imperial",
+      "ethics": ["Authoritarian", "Militarist", "Xenophobe"]
+    },
+    "Republic": {
+      "government_type": "Democratic",
+      "ethics": ["Egalitarian", "Pacifist", "Xenophile"]
+    }
+  },
+  "scoring_parameters": {
+    "economy_score": "The overall economic strength of the empire.",
+    "technology_score": "The level of technological advancement.",
+    "military_power": "The total strength of the empire's fleet.",
+    "diplomatic_weight": "The empire's influence in the galactic community."
+  },
+  "scorecard": {
+    "type": "json"
+  },
+  "parameters": {
+    "galaxy_size": "Medium",
+    "ai_empires": 8
+  }
+}
