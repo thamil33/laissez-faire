@@ -1,6 +1,6 @@
 # Laissez Faire
 
-![lm.png](lm.png)
+![lf.png](lf.png)
 
 ## An Infinite Grand Strategy Simulation Engine
 
