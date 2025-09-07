@@ -1,0 +1,7 @@
+{
+  "llm_provider": {
+    "model": "local",
+    "api_key": null,
+    "base_url": null
+  }
+}

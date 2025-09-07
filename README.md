@@ -9,7 +9,8 @@ The core of Laissez Faire is a text-based interface that allows you to interact 
 ## Key Features
 
 *   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI and local models.
-*   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games. A "Modern Day USA" scenario is included as an example.
+*   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games. See the [Scenario Creation Guide](docs/scenarios.md) for more details.
+*   **LLM-Based Scoring:** The engine can use an LLM to score player performance based on criteria defined in the scenario.
 *   **Save and Load:** The engine supports saving and loading game states, allowing you to continue your game later.
 *   **Terminal-Based Interface:** The primary interface is a terminal UI that uses the `rich` library to display styled text and tables.
 *   **Comprehensive Unit Tests:** The project has a suite of unit tests to ensure that the core components are working correctly.
@@ -31,11 +32,21 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
     pip install -r requirements.txt
     ```
 
-3.  **Run the game:**
+3.  **Configure your LLM provider:**
+
+    Create a `config.json` file in the root of the project by copying the `config.example.json` file. Then, edit it to configure your desired LLM provider. For detailed instructions, see the [LLM Configuration Guide](docs/llm_configuration.md).
+
+4.  **Run the game:**
 
     ```bash
     python main.py
     ```
+
+## Scenarios
+
+This engine supports multiple scenarios, which are defined in the `laissez_faire/scenarios` directory. The default scenario is the "Philosopher's Debate" scenario. You can switch scenarios by editing the `scenario_path` in `main.py`.
+
+For more information on creating your own scenarios, see the [Scenario Creation Guide](docs/scenarios.md).
 
 ## Running the Tests
 
@@ -54,9 +65,10 @@ pytest
 
 ## To-Do
 
-*   [ ] Add more complex scenarios and events.
-*   [ ] Implement more advanced AI behaviors for non-player characters.
-*   [ ] Create detailed documentation for users and developers.
+*   [x] Add more complex scenarios and events.
+*   [x] Implement more advanced AI behaviors for non-player characters.
+*   [x] Create detailed documentation for users and developers.
+*   [ ] Implement game mechanics for state changes (e.g., economic stability changing based on AI actions).
 *   [ ] Package the project for distribution (e.g., PyPI).
 
 ## License

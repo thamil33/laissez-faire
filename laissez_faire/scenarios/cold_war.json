@@ -1,0 +1,59 @@
+{
+  "name": "The Cold War: A World Divided",
+  "description": "A simulation of the geopolitical tensions between the United States and the Soviet Union in 1947, at the dawn of the Cold War.",
+  "start_date": "1947-03-12",
+  "player_entity_key": "countries",
+  "players": [
+    {
+      "name": "President of the United States",
+      "type": "ai",
+      "controls": "USA"
+    },
+    {
+      "name": "General Secretary of the Soviet Union",
+      "type": "ai",
+      "controls": "USSR"
+    }
+  ],
+  "parameters": {
+    "world_tension": 0.5,
+    "nuclear_proliferation": 0.1
+  },
+  "countries": {
+    "USA": {
+      "alignment": "Western Bloc",
+      "economic_stability": 0.9,
+      "political_stability": 0.8,
+      "military_strength": 0.7,
+      "influence": 90
+    },
+    "USSR": {
+      "alignment": "Eastern Bloc",
+      "economic_stability": 0.6,
+      "political_stability": 0.9,
+      "military_strength": 0.8,
+      "influence": 80
+    },
+    "UK": {
+      "alignment": "Western Bloc",
+      "economic_stability": 0.7,
+      "political_stability": 0.7,
+      "military_strength": 0.6,
+      "influence": 70
+    },
+    "France": {
+        "alignment": "Western Bloc",
+        "economic_stability": 0.6,
+        "political_stability": 0.6,
+        "military_strength": 0.5,
+        "influence": 60
+    },
+    "Poland": {
+        "alignment": "Eastern Bloc",
+        "economic_stability": 0.4,
+        "political_stability": 0.5,
+        "military_strength": 0.4,
+        "influence": 40
+    }
+  }
+}
