@@ -8,27 +8,57 @@ The core of Laissez Faire is a text-based interface that allows you to interact 
 
 ## Key Features
 
-*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience.
-*   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games.
-*   **Cross-Platform:** The engine is being built with cross-platform compatibility in mind, with the goal of running on desktops, mobile devices, and web servers.
-*   **Terminal-Based Interface:** The primary interface is a rich terminal UI that can display maps, graphs, and detailed reports.
+*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI and local models.
+*   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games. A "Modern Day USA" scenario is included as an example.
+*   **Save and Load:** The engine supports saving and loading game states, allowing you to continue your game later.
+*   **Terminal-Based Interface:** The primary interface is a terminal UI that uses the `rich` library to display styled text and tables.
+*   **Comprehensive Unit Tests:** The project has a suite of unit tests to ensure that the core components are working correctly.
 
 ## Getting Started
 
-_(Instructions to be added)_
+To get started with Laissez Faire, you will need to have Python 3.7+ installed.
+
+1.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/your-username/laissez-faire.git
+    cd laissez-faire
+    ```
+
+2.  **Install the dependencies:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3.  **Run the game:**
+
+    ```bash
+    python main.py
+    ```
+
+## Running the Tests
+
+To run the unit tests, you will need to install `pytest`:
+
+```bash
+pip install pytest
+```
+
+Then, you can run the tests from the root of the project. You may need to set the `PYTHONPATH` to include the project's root directory:
+
+```bash
+export PYTHONPATH=.
+pytest
+```
 
 ## To-Do
 
-*   [ ] Develop the core game engine, including the main game loop and event system.
-*   [ ] Implement a flexible scenario loader that can parse JSON files.
-*   [ ] Create a modular LLM interface that can support multiple backends (e.g., OpenAI, Ollama, LM Studio).
-*   [ ] Design and build a rich terminal UI with maps, graphs, and styled text.
-*   [ ] Develop a basic "Modern Day USA" scenario to test the engine.
-*   [ ] Write comprehensive unit tests for all major components.
-*   [ ] Add support for saving and loading game states.
 *   [ ] Create detailed documentation for users and developers.
 *   [ ] Package the project for distribution (e.g., PyPI).
 *   [ ] Explore options for a graphical front-end that can use the engine.
+*   [ ] Add more complex scenarios and events.
+*   [ ] Implement more advanced AI behaviors for non-player characters.
 
 ## License
 
