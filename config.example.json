@@ -1,18 +1,26 @@
 {
   "providers": {
-    "local": {},
     "openai": {
       "model": "openai",
+      "model_name": "gpt-4",
       "api_key": "YOUR_OPENAI_API_KEY",
       "base_url": null
     },
+    "openrouter": {
+      "model": "openai",
+      "model_name": "google/gemini-flash-1.5",
+      "api_key": "YOUR_OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1"
+    },
     "ollama": {
       "model": "ollama",
-      "api_key": null,
-      "base_url": "http://localhost:11434"
+      "model_name": "llama3",
+      "api_key": "ollama",
+      "base_url": "http://localhost:11434/v1"
     },
     "lm_studio": {
       "model": "openai",
+      "model_name": "local-model",
       "api_key": "not-needed",
       "base_url": "http://localhost:1234/v1"
     }

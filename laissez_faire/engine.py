@@ -58,7 +58,7 @@ class Scorecard:
 
 class GameEngine:
     """
-    The main game engine for Laissez Faire.
+    The main game engine for Laissez-faire.
     """
 
     def __init__(self, scenario_path, llm_providers: dict, scorer_llm_provider: LLMProvider):

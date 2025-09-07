@@ -1,4 +1,5 @@
-import requests
+import openai
+
 
 class LLMProvider:
     """
@@ -6,16 +7,18 @@ class LLMProvider:
     conversation history.
     """
 
-    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10):
+    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10, model_name="gpt-3.5-turbo"):
         """
         Initializes the LLM provider.
 
-        :param model: The model to use (e.g., 'local', 'openai', 'ollama').
+        :param model: The provider to use (e.g., 'local', 'openai', 'ollama').
         :param api_key: The API key for the LLM service.
         :param base_url: The base URL for the LLM service (for local models).
         :param max_history_length: The maximum number of messages to keep in the history.
+        :param model_name: The specific model to use (e.g., 'gpt-3.5-turbo').
         """
         self.model = model
+        self.model_name = model_name
         self.api_key = api_key
         self.base_url = base_url
         self.histories = {}
@@ -51,10 +54,8 @@ class LLMProvider:
 
         if self.model == "local":
             response_content = self._get_response_local(history)
-        elif self.model == "openai":
+        elif self.model == "openai" or self.model == "ollama":
             response_content = self._get_response_openai(history)
-        elif self.model == "ollama":
-            response_content = self._get_response_ollama(history)
         else:
             raise ValueError(f"Unsupported LLM model: {self.model}")
 
@@ -101,50 +102,19 @@ class LLMProvider:
 
     def _get_response_openai(self, messages):
         """
-        Gets a response from the OpenAI API, using conversation history.
+        Gets a response from an OpenAI-compatible API, using conversation history.
         """
         if not self.api_key:
             raise ValueError("API key is required for OpenAI-compatible models.")
 
-        base_url = self.base_url or "https://api.openai.com/v1"
-        url = f"{base_url}/chat/completions"
+        client = openai.OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url
+        )
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-        data = {
-            "model": "gpt-3.5-turbo",
-            "messages": messages
-        }
+        response = client.chat.completions.create(
+            model=self.model_name,
+            messages=messages
+        )
 
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-
-        return response.json()["choices"][0]["message"]["content"]
-
-    def _get_response_ollama(self, messages):
-        """
-        Gets a response from an Ollama model.
-        Note: This is a simplified implementation. Ollama's /api/generate
-        doesn't natively support a list of messages in the same way as OpenAI.
-        A more robust solution would be needed for a true conversational experience.
-        """
-        if not self.base_url:
-            self.base_url = "http://localhost:11434"
-
-        url = f"{self.base_url}/api/generate"
-
-        # Combine messages into a single prompt string
-        prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
-
-        data = {
-            "model": "llama2",
-            "prompt": prompt,
-            "stream": False
-        }
-
-        response = requests.post(url, json=data)
-        response.raise_for_status()
-
-        return response.json()["response"]
+        return response.choices[0].message.content

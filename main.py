@@ -5,7 +5,7 @@ from laissez_faire.llm import LLMProvider
 
 def main():
     """
-    The main entry point for the Laissez Faire game.
+    The main entry point for the Laissez-faire game.
     """
     # Load global LLM provider configurations
     try:

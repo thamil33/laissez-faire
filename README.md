@@ -1,21 +1,23 @@
-# Laissez Faire
+# Laissez-faire
 
-![lf.png](lf.png)
+<p align="center">
+  <img src="lf.png" alt="Laissez-faire" width="500"/>
+</p>
 
 ## An Infinite Grand Strategy Simulation Engine
 
-Welcome to **Laissez Faire**, a 0-to-infinite player grand strategy simulation engine. Inspired by Paradox Interactive titles like *Europa Universalis*, this project provides a framework for creating simulations of limitless depth and complexity, bounded only by the computational power you provide.
+Welcome to **Laissez-faire**, a 0-to-infinite player grand strategy simulation engine. Inspired by Paradox Interactive titles like *Europa Universalis*, this project provides a framework for creating simulations of limitless depth and complexity, bounded only by the computational power you provide.
 
-What do we mean by "0-to-infinite player?" At its core, Laissez Faire is a simulation engine. It can run with zero human players, allowing you to observe complex systems and emergent behaviors. It can also support one or more human players, or even a multitude of AI-driven actors, creating a dynamic and unpredictable world. The number of entities, factions, and actors is not fixed, allowing for scenarios of ever-increasing scale.
+What do we mean by "0-to-infinite player?" At its core, Laissez-faire is a simulation engine. It can run with zero human players, allowing you to observe complex systems and emergent behaviors. It can also support one or more human players, or even a multitude of AI-driven actors, creating a dynamic and unpredictable world. The number of entities, factions, and actors is not fixed, allowing for scenarios of ever-increasing scale.
 
-Laissez Faire can be experienced in two ways:
+Laissez-faire can be experienced in two ways:
 
 1.  **As a standalone, terminal-based game:** For those who enjoy a classic, text-based experience.
 2.  **As a powerful backend engine:** For developers who want to build their own games and simulations with custom GUIs and logic.
 
 ## The Vision: A Universe in a Box
 
-The ultimate goal of Laissez Faire is to be a "universe in a box"—a tool for creating and exploring complex, dynamic worlds. The engine is designed to be highly flexible and extensible, making it suitable for a wide range of applications:
+The ultimate goal of Laissez-faire is to be a "universe in a box"—a tool for creating and exploring complex, dynamic worlds. The engine is designed to be highly flexible and extensible, making it suitable for a wide range of applications:
 
 *   **Grand Strategy Games:** Build the next great historical, sci-fi, or fantasy grand strategy game.
 *   **Educational Tools:** Simulate historical events, economic systems, or political processes.
@@ -24,7 +26,7 @@ The ultimate goal of Laissez Faire is to be a "universe in a box"—a tool for c
 
 ## Key Features
 
-*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI and local models.
+*   **LLM-Powered Decision Making:** The game is driven by Large Language Models (LLMs) that control the actions of non-player characters, creating a challenging and unpredictable experience. The engine supports multiple backends, including OpenAI, OpenRouter, and local models run via Ollama or LM Studio.
 *   **Flexible Scenarios:** Scenarios are defined in JSON files, making it easy to create and share your own custom games. See the [Scenario Creation Guide](docs/scenarios.md) for more details.
 *   **Flexible Scorecards:** The engine features a flexible scorecard system that can be customized for each scenario. Scorecards can be text-based for display in the terminal or JSON-based for integration with external GUIs.
 *   **Save and Load:** The engine supports saving and loading game states, allowing you to continue your game later.
@@ -33,7 +35,7 @@ The ultimate goal of Laissez Faire is to be a "universe in a box"—a tool for c
 
 ## Getting Started
 
-To get started with Laissez Faire, you will need to have Python 3.7+ installed.
+To get started with Laissez-faire, you will need to have Python 3.7+ installed.
 
 1.  **Clone the repository:**
 
@@ -50,7 +52,7 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
 
 3.  **Configure your LLM provider:**
 
-    The game's LLM (Large Language Model) configuration is handled in the `config.json` file. This file centralizes your settings, such as API keys and local server URLs, so you don't have to edit the game's scenario files directly.
+    The game's LLM (Large Language Model) configuration is handled in the `config.json` file. This file centralizes your settings, such as API keys, model names, and server URLs, so you don't have to edit the game's scenario files directly.
 
     To get started, copy the example configuration file:
 
@@ -58,25 +60,33 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
     cp config.example.json config.json
     ```
 
-    Now, open `config.json` and edit it to match your setup. The file contains a dictionary of "providers." The game scenarios will reference these providers by name (e.g., `"openai"`, `"ollama"`).
+    Now, open `config.json` and edit it to match your setup. The file contains a dictionary of "providers." The game scenarios will reference these providers by name (e.g., `"openai"`, `"openrouter"`, `"ollama"`).
 
     **Example `config.json`:**
     ```json
     {
       "providers": {
-        "local": {},
         "openai": {
           "model": "openai",
+          "model_name": "gpt-4",
           "api_key": "YOUR_OPENAI_API_KEY",
           "base_url": null
         },
+        "openrouter": {
+          "model": "openai",
+          "model_name": "google/gemini-flash-1.5",
+          "api_key": "YOUR_OPENROUTER_API_KEY",
+          "base_url": "https://openrouter.ai/api/v1"
+        },
         "ollama": {
           "model": "ollama",
-          "api_key": null,
-          "base_url": "http://localhost:11434"
+          "model_name": "llama3",
+          "api_key": "ollama",
+          "base_url": "http://localhost:11434/v1"
         },
         "lm_studio": {
           "model": "openai",
+          "model_name": "local-model",
           "api_key": "not-needed",
           "base_url": "http://localhost:1234/v1"
         }
@@ -84,22 +94,16 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
     }
     ```
 
-    #### Connecting to LM Studio
+    #### Connecting to OpenAI-Compatible Services
 
-    1.  Start your local server in LM Studio.
-    2.  In `config.json`, the `lm_studio` provider is pre-configured for the default LM Studio server address (`http://localhost:1234/v1`).
-    3.  Scenarios can now use `"llm_provider": "lm_studio"` to have AI players use your local model.
+    Any service that provides an OpenAI-compatible API can be used. This includes **OpenRouter**, **Ollama**, and **LM Studio**.
 
-    #### Connecting to Ollama
+    1.  **Set the `model` parameter**: This should be set to `"openai"` or `"ollama"` to use the correct logic in the game engine.
+    2.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`, `"llama3"`).
+    3.  **Set your `api_key`**: Add your API key for the service.
+    4.  **Set the `base_url`**: Provide the server address for the API.
 
-    1.  Make sure your Ollama server is running.
-    2.  The `ollama` provider in `config.json` is pre-configured for the default Ollama address (`http://localhost:11434`).
-    3.  Scenarios can now use `"llm_provider": "ollama"` to have AI players use your local model.
-
-    #### Connecting to OpenAI
-
-    1.  Add your OpenAI API key to the `api_key` field for the `openai` provider in `config.json`.
-    2.  Scenarios can use `"llm_provider": "openai"` to have AI players use the OpenAI API.
+    Scenarios can now use `"llm_provider": "your_provider_name"` to have AI players use the specified model.
 
 4.  **Run the game:**
 
@@ -109,7 +113,7 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
 
 ## Scenarios
 
-This engine supports multiple scenarios, which are defined in the `laissez_faire/scenarios` directory. You can switch scenarios by editing the `scenario_path` in `main.py`. The flexibility of the engine means you can create scenarios of any scale, from a simple debate to a galaxy-spanning empire.
+This engine supports multiple scenarios, which are defined in the `laissez-faire/scenarios` directory. You can switch scenarios by editing the `scenario_path` in `main.py`. The flexibility of the engine means you can create scenarios of any scale, from a simple debate to a galaxy-spanning empire.
 
 Here are the included scenarios:
 

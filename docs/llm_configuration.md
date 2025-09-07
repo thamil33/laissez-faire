@@ -20,19 +20,27 @@ Here is the structure of the default `config.json`:
 ```json
 {
   "providers": {
-    "local": {},
     "openai": {
       "model": "openai",
+      "model_name": "gpt-4",
       "api_key": "YOUR_OPENAI_API_KEY",
       "base_url": null
     },
+    "openrouter": {
+      "model": "openai",
+      "model_name": "google/gemini-flash-1.5",
+      "api_key": "YOUR_OPENROUTER_API_KEY",
+      "base_url": "https://openrouter.ai/api/v1"
+    },
     "ollama": {
       "model": "ollama",
-      "api_key": null,
-      "base_url": "http://localhost:11434"
+      "model_name": "llama3",
+      "api_key": "ollama",
+      "base_url": "http://localhost:11434/v1"
     },
     "lm_studio": {
       "model": "openai",
+      "model_name": "local-model",
       "api_key": "not-needed",
       "base_url": "http://localhost:1234/v1"
     }
@@ -40,56 +48,27 @@ Here is the structure of the default `config.json`:
 }
 ```
 
-Each provider configuration has three potential fields:
-- `model`: The type of LLM backend. Supported values are `"local"`, `"openai"`, and `"ollama"`.
-- `api_key`: Your API key for the service (required for `openai` and other compatible services like OpenRouter).
+Each provider configuration has four potential fields:
+- `model`: The type of LLM backend. Supported values are `"openai"` and `"ollama"`. This is used to select the correct logic in the engine.
+- `model_name`: The specific model identifier for the API (e.g., `gpt-4`, `google/gemini-flash-1.5`).
+- `api_key`: Your API key for the service.
 - `base_url`: The base URL for the API, used for local models or custom endpoints.
 
-## Connecting to Local LLMs
+## Connecting to Services
 
-### LM Studio
+Any service that provides an OpenAI-compatible API can be used. This includes **OpenAI**, **OpenRouter**, **Ollama**, and **LM Studio**.
 
-LM Studio exposes an OpenAI-compatible server.
-1.  In LM Studio, navigate to the "Local Server" tab and start the server.
-2.  In `config.json`, the `lm_studio` provider is already configured for the default LM Studio address (`http://localhost:1234/v1`). You can adjust the `base_url` if you have a custom setup. The `api_key` is not required by LM Studio, but the field should be present.
-3.  In a scenario file, you can set `"llm_provider": "lm_studio"` for any AI player to use your LM Studio model.
-
-### Ollama
-
-1.  Ensure your local Ollama server is running.
-2.  In `config.json`, the `ollama` provider is configured for the default address (`http://localhost:11434`). You can change the `base_url` if needed.
-3.  In a scenario file, set `"llm_provider": "ollama"` for any AI player to use your Ollama model.
-
-## Connecting to Cloud Services
-
-### OpenAI
-
-1.  In `config.json`, find the `openai` provider.
-2.  Replace `"YOUR_OPENAI_API_KEY"` with your actual OpenAI API key.
-3.  In a scenario file, set `"llm_provider": "openai"` to use the OpenAI API.
-
-### OpenRouter (and other OpenAI-compatible services)
-
-You can use the `openai` provider type to connect to any OpenAI-compatible API endpoint.
-
-1.  You can either modify the existing `openai` provider or create a new one (e.g., `"openrouter"`).
-2.  Set the `api_key` to your service's API key.
-3.  Set the `base_url` to the service's API endpoint (e.g., `https://openrouter.ai/api/v1`).
-
-Example for a new OpenRouter provider:
-```json
-"openrouter": {
-  "model": "openai",
-  "api_key": "sk-or-...",
-  "base_url": "https://openrouter.ai/api/v1"
-}
-```
+1.  **Create a provider entry**: In `config.json`, create a new entry under `providers` (e.g., `"my_provider"`).
+2.  **Set the `model` parameter**: This should be set to `"openai"` or `"ollama"` to use the correct logic in the game engine.
+3.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`, `"llama3"`).
+4.  **Set your `api_key`**: Add your API key for the service.
+5.  **Set the `base_url`**: Provide the server address for the API.
 
 ## How Scenarios Use Providers
 
-Scenario files in the `laissez_faire/scenarios/` directory determine which provider each AI player uses. This is done via the `llm_provider` key.
+Scenario files in the `laissez-faire/scenarios/` directory determine which provider each AI player uses. This is done via the `llm_provider` key.
 
-For example, in `cold_war.json`, you could have one player use OpenAI and the other use a local model:
+For example, in `cold_war.json`, you could have one player use OpenRouter and the other use a local Ollama model:
 
 ```json
 "players": [
@@ -97,18 +76,18 @@ For example, in `cold_war.json`, you could have one player use OpenAI and the ot
     "name": "President of the United States",
     "type": "ai",
     "controls": "USA",
-    "llm_provider": "openai"
+    "llm_provider": "openrouter"
     ...
   },
   {
     "name": "General Secretary of the Soviet Union",
     "type": "ai",
     "controls": "USSR",
-    "llm_provider": "lm_studio"
+    "llm_provider": "ollama"
     ...
   }
 ],
-"scorer_llm_provider": "ollama"
+"scorer_llm_provider": "openai"
 ```
 
-When the game starts, it will look up the `"openai"`, `"lm_studio"`, and `"ollama"` providers in your `config.json` to get the necessary connection details.
+When the game starts, it will look up the `"openrouter"`, `"ollama"`, and `"openai"` providers in your `config.json` to get the necessary connection details.
