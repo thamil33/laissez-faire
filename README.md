@@ -1,10 +1,24 @@
 # Laissez Faire
 
-## A Grand Strategy Game Engine
+## An Infinite Grand Strategy Simulation Engine
 
-Welcome to **Laissez Faire**, a zero-to-one player grand strategy game engine inspired by Paradox Interactive titles like *Europa Universalis*. This project aims to create a flexible and powerful engine that can be used to simulate a wide range of scenarios, from modern warfare to historical events.
+Welcome to **Laissez Faire**, a 0-to-infinite player grand strategy simulation engine. Inspired by Paradox Interactive titles like *Europa Universalis*, this project provides a framework for creating simulations of limitless depth and complexity, bounded only by the computational power you provide.
 
-The core of Laissez Faire is a text-based interface that allows you to interact with the game using natural language. Instead of micromanaging units and resources, you will develop high-level strategies and see how they play out in a dynamic and realistic world.
+What do we mean by "0-to-infinite player?" At its core, Laissez Faire is a simulation engine. It can run with zero human players, allowing you to observe complex systems and emergent behaviors. It can also support one or more human players, or even a multitude of AI-driven actors, creating a dynamic and unpredictable world. The number of entities, factions, and actors is not fixed, allowing for scenarios of ever-increasing scale.
+
+Laissez Faire can be experienced in two ways:
+
+1.  **As a standalone, terminal-based game:** For those who enjoy a classic, text-based experience.
+2.  **As a powerful backend engine:** For developers who want to build their own games and simulations with custom GUIs and logic.
+
+## The Vision: A Universe in a Box
+
+The ultimate goal of Laissez Faire is to be a "universe in a box"—a tool for creating and exploring complex, dynamic worlds. The engine is designed to be highly flexible and extensible, making it suitable for a wide range of applications:
+
+*   **Grand Strategy Games:** Build the next great historical, sci-fi, or fantasy grand strategy game.
+*   **Educational Tools:** Simulate historical events, economic systems, or political processes.
+*   **Research:** Explore complex systems, emergent behavior, and artificial intelligence.
+*   **Storytelling:** Create dynamic, procedurally generated narratives and worlds.
 
 ## Key Features
 
@@ -44,7 +58,7 @@ To get started with Laissez Faire, you will need to have Python 3.7+ installed.
 
 ## Scenarios
 
-This engine supports multiple scenarios, which are defined in the `laissez_faire/scenarios` directory. You can switch scenarios by editing the `scenario_path` in `main.py`.
+This engine supports multiple scenarios, which are defined in the `laissez_faire/scenarios` directory. You can switch scenarios by editing the `scenario_path` in `main.py`. The flexibility of the engine means you can create scenarios of any scale, from a simple debate to a galaxy-spanning empire.
 
 Here are the included scenarios:
 
