@@ -34,13 +34,29 @@
     }
   },
   "scoring_parameters": {
-    "eloquence": "How well-articulated and persuasive the arguments are.",
-    "originality": "How novel and insightful the ideas presented are.",
-    "relevance": "How well the arguments stick to the topic of innovation and intuition.",
-    "logic": "The strength and coherence of the reasoning."
+    "eloquence": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in eloquence for each debater."
+    },
+    "originality": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in originality for each debater."
+    },
+    "relevance": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in relevance for each debater."
+    },
+    "logic": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in logic for each debater."
+    }
   },
   "scorecard": {
-    "type": "text",
+    "render_type": "text",
     "template": "Debate Progress:\n\nEinstein vs. Jobs\n\n{Einstein.eloquence} [red]<-[/red] Eloquence [green]->[/green] {Jobs.eloquence}\n{Einstein.originality} [red]<-[/red] Originality [green]->[/green] {Jobs.originality}\n{Einstein.relevance} [red]<-[/red] Relevance [green]->[/green] {Jobs.relevance}\n{Einstein.logic} [red]<-[/red] Logic [green]->[/green] {Jobs.logic}\n"
   },
   "parameters": {

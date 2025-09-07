@@ -65,12 +65,24 @@
     }
   },
   "scoring_parameters": {
-    "influence_europe": "The player's influence in Europe.",
-    "influence_asia": "The player's influence in Asia.",
-    "influence_africa": "The player's influence in Africa."
+    "influence_europe": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Europe for each player."
+    },
+    "influence_asia": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Asia for each player."
+    },
+    "influence_africa": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in influence in Africa for each player."
+    }
   },
   "scorecard": {
-    "type": "text",
+    "render_type": "text",
     "template": "World Influence Map:\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /                       \\\n   /     USA Influence       \\\n  /                           \\\n |     Europe: {USA.influence_europe}   Asia: {USA.influence_asia}    |\n |                           |\n |    Africa: {USA.influence_africa}      |\n |                           |\n |    USSR Influence         |\n |    Europe: {USSR.influence_europe}  Asia: {USSR.influence_asia}   |\n |   Africa: {USSR.influence_africa}       |\n  \\                         /\n   `'-.,_______________,.-'`"
   }
 }

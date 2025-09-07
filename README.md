@@ -69,14 +69,58 @@ Here are the included scenarios:
 
 For more information on creating your own scenarios, see the [Scenario Creation Guide](docs/scenarios.md).
 
-## Scorecards
+## Scoring System
 
-The scorecard system is designed to be highly flexible. Each scenario can define its own scorecard format using a `scorecard` object in the scenario's JSON file.
+The scoring system is designed to be highly flexible, allowing for different methods of tracking progress in a scenario. The scoring logic is defined in the `scoring_parameters` object in the scenario's JSON file. Each key in this object represents a score to be tracked.
 
-There are two types of scorecards:
+For each score, you must define a `type`, which determines how the score is updated at the end of each turn. There are two types of scoring:
 
-*   **`text`:**  Renders a text-based scorecard in the terminal. The template can be customized with placeholders for scores.
-*   **`json`:** Outputs the scores in JSON format, which is ideal for integration with a graphical user interface (GUI).
+*   **`absolute`**: The LLM is prompted to return the new absolute value for the score, which then replaces the old value. This is useful for scores that are categorical or when you want the LLM to have full control over the value.
+
+    *Example:*
+    ```json
+    "scoring_parameters": {
+      "political_stability": {
+        "type": "absolute",
+        "prompt": "Return the new political stability score (1-100) for each country."
+      }
+    }
+    ```
+
+*   **`calculated`**: The LLM is prompted to return one or more "judgements" (e.g., a delta or a multiplier), and the engine uses a `calculation` formula to compute the new score. This is useful for scores that change incrementally or based on a specific formula.
+
+    The `calculation` string can use the following variables:
+    *   `current_value`: The current value of the score.
+    *   `llm_judgement`: The value returned by the LLM for this score.
+
+    *Example (additive scoring):*
+    ```json
+    "scoring_parameters": {
+      "influence": {
+        "type": "calculated",
+        "calculation": "current_value + llm_judgement",
+        "prompt": "Return the change (delta) in influence for each player."
+      }
+    }
+    ```
+
+    *Example (multiplicative scoring):*
+    ```json
+    "scoring_parameters": {
+      "users": {
+        "type": "calculated",
+        "calculation": "current_value * (1 + llm_judgement)",
+        "prompt": "Return a user growth multiplier (e.g., 0.1 for 10% growth) for each company."
+      }
+    }
+    ```
+
+### Scorecard Rendering
+
+The display of the scorecard is controlled by the `scorecard` object in the scenario's JSON file. It has two main properties:
+
+*   `render_type`: Can be `text` for a terminal-based display or `json` for integration with a GUI.
+*   `template`: For `text` render type, this is a string that can contain placeholders for scores, e.g., `{Player.score_name}`.
 
 ## Running the Tests
 
