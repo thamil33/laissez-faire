@@ -1,0 +1,37 @@
+{
+  "name": "A Debate of Minds",
+  "description": "A philosophical debate between Albert Einstein and Steve Jobs on the nature of innovation and intuition.",
+  "start_date": "2024-01-01",
+  "player_entity_key": "debaters",
+  "players": [
+    {
+      "name": "Albert Einstein",
+      "type": "ai",
+      "controls": "Einstein"
+    },
+    {
+      "name": "Steve Jobs",
+      "type": "ai",
+      "controls": "Jobs"
+    }
+  ],
+  "debaters": {
+    "Einstein": {
+      "field": "Theoretical Physics",
+      "famous_for": "Theory of Relativity"
+    },
+    "Jobs": {
+      "field": "Technology & Business",
+      "famous_for": "Apple Inc., iPhone"
+    }
+  },
+  "scoring_parameters": {
+    "eloquence": "How well-articulated and persuasive the arguments are.",
+    "originality": "How novel and insightful the ideas presented are.",
+    "relevance": "How well the arguments stick to the topic of innovation and intuition.",
+    "logic": "The strength and coherence of the reasoning."
+  },
+  "parameters": {
+    "topic": "The role of intuition versus rigorous analysis in driving true innovation."
+  }
+}
