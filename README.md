@@ -35,7 +35,7 @@ The ultimate goal of Laissez-faire is to be a "universe in a box"—a tool for c
 
 ## Getting Started
 
-To get started with Laissez-faire, you will need to have Python 3.7+ installed.
+To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` installed. You can find installation instructions for `uv` [here](https://docs.astral.sh/uv/getting-started/installation/).
 
 1.  **Clone the repository:**
 
@@ -44,13 +44,20 @@ To get started with Laissez-faire, you will need to have Python 3.7+ installed.
     cd laissez-faire
     ```
 
-2.  **Install the dependencies:**
+2.  **Create and activate a virtual environment:**
 
     ```bash
-    pip install -r requirements.txt
+    uv venv
+    source .venv/bin/activate
     ```
 
-3.  **Configure your LLM provider:**
+3.  **Install the dependencies:**
+
+    ```bash
+    uv pip install -r requirements.txt
+    ```
+
+4.  **Configure your LLM provider:**
 
     The game's LLM (Large Language Model) configuration is handled in the `config.json` file. This file centralizes your settings, such as API keys, model names, and server URLs, so you don't have to edit the game's scenario files directly.
 
@@ -105,7 +112,7 @@ To get started with Laissez-faire, you will need to have Python 3.7+ installed.
 
     Scenarios can now use `"llm_provider": "your_provider_name"` to have AI players use the specified model.
 
-4.  **Run the game:**
+5.  **Run the game:**
 
     ```bash
     python main.py
@@ -126,7 +133,23 @@ For more information on creating your own scenarios, see the [Scenario Creation 
 
 ## Scoring System
 
-The scoring system is designed to be highly flexible, allowing for different methods of tracking progress in a scenario. The scoring logic is defined in the `scoring_parameters` object in the scenario's JSON file. Each key in this object represents a score to be tracked.
+The scoring system is designed to be highly flexible, allowing for different methods of tracking progress in a scenario. The scoring logic is defined in the `scoring_parameters` object in the scenario's JSON file.
+
+### Simple Scoring
+
+For simple scoring, `scoring_parameters` can be a dictionary where the key is the name of the score and the value is a description of what it means. The LLM will be asked to provide a new value for each score on each turn.
+
+*Example:*
+```json
+"scoring_parameters": {
+  "eloquence": "How well-articulated and persuasive the arguments are.",
+  "originality": "How novel and insightful the ideas presented are."
+}
+```
+
+### Advanced Scoring
+
+For more complex scoring, each score in `scoring_parameters` can be an object that defines how the score is calculated. This allows for more fine-grained control over how scores are updated.
 
 For each score, you must define a `type`, which determines how the score is updated at the end of each turn. There are two types of scoring:
 
@@ -159,17 +182,6 @@ For each score, you must define a `type`, which determines how the score is upda
     }
     ```
 
-    *Example (multiplicative scoring):*
-    ```json
-    "scoring_parameters": {
-      "users": {
-        "type": "calculated",
-        "calculation": "current_value * (1 + llm_judgement)",
-        "prompt": "Return a user growth multiplier (e.g., 0.1 for 10% growth) for each company."
-      }
-    }
-    ```
-
 ### Scorecard Rendering
 
 The display of the scorecard is controlled by the `scorecard` object in the scenario's JSON file. It has two main properties:
@@ -177,19 +189,26 @@ The display of the scorecard is controlled by the `scorecard` object in the scen
 *   `render_type`: Can be `text` for a terminal-based display or `json` for integration with a GUI.
 *   `template`: For `text` render type, this is a string that can contain placeholders for scores, e.g., `{Player.score_name}`.
 
-## Running the Tests
-
-To run the unit tests, you will need to install `pytest`:
-
-```bash
-pip install pytest
+*Example:*
+```json
+"scorecard": {
+  "render_type": "text",
+  "template": "World Influence Map:\n\n      USA Influence: {USA.influence_europe}\n      USSR Influence: {USSR.influence_europe}"
+}
 ```
 
-Then, you can run the tests from the root of the project. You may need to set the `PYTHONPATH` to include the project's root directory:
+## Running the Tests
+
+To run the unit tests, you will need to install the development dependencies:
 
 ```bash
-export PYTHONPATH=.
-pytest
+uv pip install -r requirements-dev.txt
+```
+
+Then, you can run the tests from the root of the project:
+
+```bash
+uv run bash -c "export PYTHONPATH=.; pytest"
 ```
 
 ## License
