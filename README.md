@@ -1,5 +1,7 @@
 # Laissez Faire
 
+![lm.png](lm.png)
+
 ## An Infinite Grand Strategy Simulation Engine
 
 Welcome to **Laissez Faire**, a 0-to-infinite player grand strategy simulation engine. Inspired by Paradox Interactive titles like *Europa Universalis*, this project provides a framework for creating simulations of limitless depth and complexity, bounded only by the computational power you provide.
