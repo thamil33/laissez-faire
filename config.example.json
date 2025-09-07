@@ -1,7 +1,20 @@
 {
-  "llm_provider": {
-    "model": "local",
-    "api_key": null,
-    "base_url": null
+  "providers": {
+    "local": {},
+    "openai": {
+      "model": "openai",
+      "api_key": "YOUR_OPENAI_API_KEY",
+      "base_url": null
+    },
+    "ollama": {
+      "model": "ollama",
+      "api_key": null,
+      "base_url": "http://localhost:11434"
+    },
+    "lm_studio": {
+      "model": "openai",
+      "api_key": "not-needed",
+      "base_url": "http://localhost:1234/v1"
+    }
   }
 }

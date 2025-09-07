@@ -13,9 +13,7 @@
       "name": "Bill Gates",
       "type": "ai",
       "controls": "Microsoft",
-      "llm_config": {
-        "model": "local"
-      },
+      "llm_provider": "local",
       "prompt_summary": "You are Bill Gates, the CEO of Microsoft. Your Windows operating system dominates the market. Your goal is to maintain this dominance, expand into new markets, and fend off any potential threats, including the resurgent Apple and the growing Linux community.",
       "system_prompt": "You are Bill Gates, the CEO of Microsoft. You are at the top of the tech world. Your strategy should be to leverage your existing monopoly, bundle new products with Windows, and use your vast resources to crush any competition. You should be strategic, aggressive, and focused on market share."
     },
@@ -23,16 +21,12 @@
       "name": "Linus Torvalds",
       "type": "ai",
       "controls": "Linux",
-      "llm_config": {
-        "model": "local"
-      },
+      "llm_provider": "local",
       "prompt_summary": "You are Linus Torvalds, the creator of Linux. Your open-source operating system is gaining traction among developers and tech enthusiasts. Your goal is to foster the growth of the Linux community, improve the kernel, and challenge the proprietary models of Microsoft and Apple.",
       "system_prompt": "You are Linus Torvalds. You are passionate about open source and collaboration. Your goal is to grow the Linux user base by promoting its stability, flexibility, and low cost. You should focus on the technical merits of Linux and the power of its community. You are not driven by profit, but by the desire to create the best possible operating system."
     }
   ],
-  "scorer_llm_config": {
-    "model": "local"
-  },
+  "scorer_llm_provider": "local",
   "companies": {
     "Microsoft": {
       "users": 200000000
