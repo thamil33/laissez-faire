@@ -7,18 +7,16 @@ class LLMProvider:
     conversation history.
     """
 
-    def __init__(self, model="local", api_key=None, base_url=None, max_history_length=10, model_name="gpt-3.5-turbo", summarizer_provider=None):
+    def __init__(self, api_key=None, base_url=None, max_history_length=10, model_name="gpt-3.5-turbo", summarizer_provider=None):
         """
         Initializes the LLM provider.
 
-        :param model: The provider to use (e.g., 'local', 'openai', 'ollama').
         :param api_key: The API key for the LLM service.
         :param base_url: The base URL for the LLM service (for local models).
         :param max_history_length: The maximum number of messages to keep in the history.
         :param model_name: The specific model to use (e.g., 'gpt-3.5-turbo').
         :param summarizer_provider: An optional LLM provider for summarizing history.
         """
-        self.model = model
         self.model_name = model_name
         self.api_key = api_key
         self.base_url = base_url
@@ -57,12 +55,7 @@ class LLMProvider:
 
         history.append({"role": "user", "content": prompt})
 
-        if self.model == "local":
-            response_content = self._get_response_local(history)
-        elif self.model == "openai":
-            response_content = self._get_response_openai(history, tools)
-        else:
-            raise ValueError(f"Unsupported LLM model: {self.model}")
+        response_content = self._get_response_openai(history, tools)
 
         history.append({"role": "assistant", "content": response_content})
         return response_content
@@ -91,15 +84,6 @@ class LLMProvider:
             if system_prompt:
                 self.histories[player_name].append(system_prompt)
             self.histories[player_name].append({"role": "system", "content": f"Summary of previous events: {summary}"})
-
-    def _get_response_local(self, messages):
-        """
-        Gets a placeholder response from a local model. This is used as a
-        fallback when a proper LLM provider is not configured, allowing the
-        application to run without requiring an API key.
-        """
-        print(f"Sending messages to local model: {messages}")
-        return "This is a placeholder response from the local LLM."
 
     def _get_response_openai(self, messages, tools=None):
         """

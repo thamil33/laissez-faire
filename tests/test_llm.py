@@ -6,21 +6,8 @@ def test_llm_provider_init():
     """
     Tests that the LLMProvider can be initialized.
     """
-    provider = LLMProvider()
-    assert provider.model == "local"
-
-    provider_openai = LLMProvider(model="openai", api_key="test_key")
-    assert provider_openai.model == "openai"
-    assert provider_openai.api_key == "test_key"
-
-def test_llm_provider_get_response_local():
-    """
-    Tests that the local LLM provider returns a placeholder response.
-    """
-    provider = LLMProvider()
-    response = provider.get_response("player1", "test prompt")
-    assert isinstance(response, str)
-    assert "placeholder" in response
+    provider = LLMProvider(api_key="test_key")
+    assert provider.api_key == "test_key"
 
 @patch('openai.OpenAI')
 def test_get_response_openai_success(mock_openai_class):
@@ -42,7 +29,7 @@ def test_get_response_openai_success(mock_openai_class):
     mock_instance.chat.completions.create.return_value = mock_response
     mock_openai_class.return_value = mock_instance
 
-    provider = LLMProvider(model="openai", api_key=api_key)
+    provider = LLMProvider(api_key=api_key)
     response = provider.get_response(player_name, prompt)
 
     assert response == expected_response
@@ -53,7 +40,7 @@ def test_get_response_openai_no_api_key():
     """
     Tests that a ValueError is raised if the API key is missing for OpenAI.
     """
-    provider = LLMProvider(model="openai")
+    provider = LLMProvider()
     with pytest.raises(ValueError, match="API key is required for OpenAI-compatible models."):
         provider.get_response("player1", "test prompt")
 
@@ -71,18 +58,10 @@ def test_get_response_openai_api_error_silent_fail(mock_openai_class):
     )
     mock_openai_class.return_value = mock_instance
 
-    provider = LLMProvider(model="openai", api_key="test_key")
+    provider = LLMProvider(api_key="test_key")
     response = provider.get_response("player1", "test prompt")
 
     assert "Error: Could not get a response from the model." in response
-
-def test_unsupported_model():
-    """
-    Tests that a ValueError is raised for an unsupported model.
-    """
-    provider = LLMProvider(model="unsupported_model")
-    with pytest.raises(ValueError, match="Unsupported LLM model: unsupported_model"):
-        provider.get_response("player1", "test prompt")
 
 def test_get_or_create_history():
     """

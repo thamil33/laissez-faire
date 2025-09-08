@@ -24,7 +24,6 @@ def test_openrouter_llm_response(model_name):
     This is an integration test and requires a real API key.
     """
     provider = LLMProvider(
-        model="openai",
         api_key=OPENROUTER_API_KEY,
         base_url="https://openrouter.ai/api/v1",
         model_name=model_name
@@ -48,13 +47,11 @@ def test_gameplay_integration_with_openrouter(model_name):
     """
     # Create the LLM providers for the players and the scorer
     player_provider = LLMProvider(
-        model="openai",
         api_key=OPENROUTER_API_KEY,
         base_url="https://openrouter.ai/api/v1",
         model_name=model_name
     )
     scorer_provider = LLMProvider(
-        model="openai",
         api_key=OPENROUTER_API_KEY,
         base_url="https://openrouter.ai/api/v1",
         model_name=model_name
