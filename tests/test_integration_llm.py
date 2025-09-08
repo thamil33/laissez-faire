@@ -1,6 +1,8 @@
 import pytest
 import os
+import json
 from laissez_faire.llm import LLMProvider
+from laissez_faire.engine import GameEngine
 
 # Mark all tests in this file as integration tests
 pytestmark = pytest.mark.integration
@@ -36,3 +38,90 @@ def test_openrouter_llm_response(model_name):
     assert len(response) > 0
     # A simple check to see if the response is reasonable
     assert "Paris" in response
+
+@pytest.mark.skipif(not OPENROUTER_API_KEY, reason="OPENROUTER_API_KEY is not set")
+@pytest.mark.parametrize("model_name", MODELS_TO_TEST)
+def test_gameplay_integration_with_openrouter(model_name):
+    """
+    Tests the gameplay loop with a real OpenRouter model.
+    This test runs a simple scenario and checks that the scorecard is updated.
+    """
+    # Create the LLM providers for the players and the scorer
+    player_provider = LLMProvider(
+        model="openai",
+        api_key=OPENROUTER_API_KEY,
+        base_url="https://openrouter.ai/api/v1",
+        model_name=model_name
+    )
+    scorer_provider = LLMProvider(
+        model="openai",
+        api_key=OPENROUTER_API_KEY,
+        base_url="https://openrouter.ai/api/v1",
+        model_name=model_name
+    )
+
+    llm_providers = {"Plato": player_provider, "Aristotle": player_provider}
+
+    # Create a temporary scenario file for the test
+    scenario_data = {
+      "name": "Test Scenario: Philosopher's Debate",
+      "description": "A simple debate between two philosophers on the nature of reality.",
+      "player_entity_key": "philosophers",
+      "players": [
+        {
+          "name": "Plato",
+          "type": "ai",
+          "controls": "Plato",
+          "system_prompt": "You are the philosopher Plato. You believe that the physical world is not the real world; instead, it is a shadow of the world of Forms. Your goal is to convince your opponent of this."
+        },
+        {
+          "name": "Aristotle",
+          "type": "ai",
+          "controls": "Aristotle",
+          "system_prompt": "You are the philosopher Aristotle. You believe that the physical world is the real world, and that reality is perceived through the senses. Your goal is to convince your opponent of this."
+        }
+      ],
+      "philosophers": {
+        "Plato": {
+          "coherence": 0
+        },
+        "Aristotle": {
+          "coherence": 0
+        }
+      },
+      "scoring_parameters": {
+        "coherence": {
+          "type": "calculated",
+          "calculation": "current_value + llm_judgement",
+          "prompt": "On a scale of 1-10, how coherent was the argument presented by each philosopher? Please return a JSON object with each philosopher's name as the key and their score as the value."
+        }
+      },
+      "scorecard": {
+        "render_type": "json"
+      }
+    }
+    scenario_path = "test_scenario.json"
+    with open(scenario_path, "w") as f:
+        json.dump(scenario_data, f)
+
+    # Initialize the game engine
+    engine = GameEngine(llm_providers, scorer_provider, scenario_path)
+
+    try:
+        # Run the game for one turn
+        engine.run(max_turns=1)
+
+        # Assert that the scorecard has been updated
+        assert engine.scorecard is not None
+        assert "Plato" in engine.scorecard.data
+        assert "Aristotle" in engine.scorecard.data
+        assert "coherence" in engine.scorecard.data["Plato"]
+        assert "coherence" in engine.scorecard.data["Aristotle"]
+
+        # Since the LLM's response is not deterministic, we can't assert a specific value.
+        # Instead, we check that the score is not the initial value (0).
+        assert engine.scorecard.data["Plato"]["coherence"] != 0
+        assert engine.scorecard.data["Aristotle"]["coherence"] != 0
+    finally:
+        # Clean up the temporary scenario file
+        os.remove(scenario_path)
