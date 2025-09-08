@@ -26,6 +26,11 @@ class Scorecard:
             '/': operator.truediv
         }
 
+        # Check for unsupported operators first
+        unsupported_ops = set(re.findall(r'[^\w\s.()]', expr)) - set(ops.keys())
+        if unsupported_ops:
+            raise ValueError(f"Unsupported operator: {unsupported_ops.pop()}")
+
         # remove parentheses
         expr = expr.replace("(", "").replace(")", "")
         # Regular expression to safely parse the expression
@@ -115,7 +120,7 @@ class GameEngine:
     The main game engine for Laissez-faire.
     """
 
-    def __init__(self, llm_providers: dict, scorer_llm_provider: LLMProvider, scenario_path=None):
+    def __init__(self, llm_providers: dict, scorer_llm_provider: LLMProvider, scenario_path=None, saves_dir="saves"):
         """
         Initializes the game engine.
         :param llm_providers: A dictionary of LLM providers for each player.
@@ -128,6 +133,7 @@ class GameEngine:
         self.scorer_llm_provider = scorer_llm_provider
         self.history = []
         self.scorecard = None
+        self.saves_dir = saves_dir
 
         if self.scenario:
             self.initialize_system_prompts()
@@ -210,9 +216,9 @@ class GameEngine:
                 ui.display_scores(self.scorecard)
 
             # Auto-save the game
-            if not os.path.exists("saves"):
-                os.makedirs("saves")
-            self.save_game("saves/autosave.json")
+            if not os.path.exists(self.saves_dir):
+                os.makedirs(self.saves_dir)
+            self.save_game(os.path.join(self.saves_dir, "autosave.json"))
             print("Game auto-saved.")
 
         print("Game simulation finished.")
@@ -338,3 +344,5 @@ class GameEngine:
         if "scorecard" in self.scenario:
             self.scorecard = Scorecard(self.scenario)
             self.scorecard.data = game_state.get("scorecard", {})
+        else:
+            self.scorecard = None

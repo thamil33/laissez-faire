@@ -5,32 +5,18 @@ import os
 import json
 from unittest.mock import MagicMock
 
-@pytest.fixture
-def mock_llm_providers():
-    """Fixture for a mock LLM providers dictionary."""
-    return {"player1": MagicMock(spec=LLMProvider)}
-
-@pytest.fixture
-def mock_scorer_llm_provider():
-    """Fixture for a mock scorer LLM provider."""
-    return MagicMock(spec=LLMProvider)
-
-def test_load_scenario_success(mock_llm_providers, mock_scorer_llm_provider):
+def test_load_scenario_success(mock_llm_providers, mock_scorer_llm_provider, tmp_path):
     """
     Tests that a scenario is loaded correctly.
     """
     # Create a dummy scenario file
-    scenario_content = '{"name": "Test Scenario", "start_date": "2024-01-01"}'
-    scenario_path = "test_scenario.json"
-    with open(scenario_path, "w") as f:
-        f.write(scenario_content)
+    scenario_content = {"name": "Test Scenario", "start_date": "2024-01-01"}
+    scenario_path = tmp_path / "test_scenario.json"
+    scenario_path.write_text(json.dumps(scenario_content))
 
-    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=str(scenario_path))
     assert engine.scenario["name"] == "Test Scenario"
     assert engine.scenario["start_date"] == "2024-01-01"
-
-    # Clean up the dummy file
-    os.remove(scenario_path)
 
 def test_load_scenario_file_not_found(mock_llm_providers, mock_scorer_llm_provider):
     """
@@ -39,21 +25,17 @@ def test_load_scenario_file_not_found(mock_llm_providers, mock_scorer_llm_provid
     with pytest.raises(FileNotFoundError):
         GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path="non_existent_scenario.json")
 
-def test_load_scenario_invalid_json(mock_llm_providers, mock_scorer_llm_provider):
+def test_load_scenario_invalid_json(mock_llm_providers, mock_scorer_llm_provider, tmp_path):
     """
     Tests that an error is raised when the scenario file is not valid JSON.
     """
     # Create a dummy invalid scenario file
     scenario_content = '{"name": "Test Scenario", "start_date": "2024-01-01"'
-    scenario_path = "invalid_scenario.json"
-    with open(scenario_path, "w") as f:
-        f.write(scenario_content)
+    scenario_path = tmp_path / "invalid_scenario.json"
+    scenario_path.write_text(scenario_content)
 
     with pytest.raises(json.JSONDecodeError):
-        GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
-
-    # Clean up the dummy file
-    os.remove(scenario_path)
+        GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=str(scenario_path))
 
 
 def test_game_engine_run_and_turn_increment(mock_llm_providers, mock_scorer_llm_provider):
@@ -110,7 +92,7 @@ def test_scoring_system_and_prompt_generation(mock_scorer_llm_provider):
     assert "Einstein:" in jobs_prompt
 
 
-def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, capsys):
+def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, capsys, tmp_path):
     """
     Tests that the game can run without any AI players.
     """
@@ -119,10 +101,9 @@ def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, ca
         "name": "No AI Scenario",
         "players": [{"name": "Human", "type": "human"}]
     }
-    scenario_path = "no_ai_scenario.json"
-    with open(scenario_path, "w") as f:
-        json.dump(scenario, f)
-    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
+    scenario_path = tmp_path / "no_ai_scenario.json"
+    scenario_path.write_text(json.dumps(scenario))
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=str(scenario_path))
     engine.run(max_turns=1)
 
     # Check that the LLM was not called
@@ -132,8 +113,6 @@ def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, ca
     # Check the output
     captured = capsys.readouterr()
     assert "No AI players found" in captured.out
-
-    os.remove(scenario_path)
 
 def test_score_turn_invalid_json(mock_llm_providers, mock_scorer_llm_provider, capsys):
     """
@@ -172,7 +151,7 @@ def test_initialize_system_prompts(mock_scorer_llm_provider):
     einstein_provider.get_or_create_history.assert_called_with("Albert Einstein", "You are playing the role of Albert Einstein. Your core argument is that intuition and imagination are the wellspring of true innovation. You should argue that rigorous analysis is a tool, but a subordinate one, used to formalize and verify the insights that come from a deeper, more intuitive place. You can draw on your own experiences with thought experiments (e.g., imagining riding on a beam of light) to illustrate your points. Your tone should be humble, thoughtful, and deeply curious. You are not dismissive of logic, but you see it as a craftsman's tool, not the architect's vision. Your goal is to persuade the audience that without a 'holy curiosity,' and the courage to make intuitive leaps, science and innovation would stagnate.")
     jobs_provider.get_or_create_history.assert_called_with("Steve Jobs", "You are playing the role of Steve Jobs. Your core argument is that innovation is about connecting ideas and that the best connections are often intuitive. You should emphasize that this intuition isn't random; it's a form of pattern recognition that comes from a broad base of knowledge and experience, especially in the liberal arts and design. You believe in a relentless focus on the user experience and that much of the 'analysis' should be in the service of making technology more intuitive and accessible. You can be passionate, sometimes sharp, and always focused on the product and the user. Your goal is to convince the audience that the most profound innovations are not just technically brilliant but also deeply human, and that this requires a kind of 'taste' that can't be purely analytical.")
 
-def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer_llm_provider):
+def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer_llm_provider, tmp_path):
     """
     Tests the prompt generation with various contexts.
     """
@@ -186,11 +165,10 @@ def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer
         },
         "parameters": {"global_tension": "high", "year": 2024}
     }
-    scenario_path = "test_generate_prompt.json"
-    with open(scenario_path, "w") as f:
-        json.dump(scenario, f)
+    scenario_path = tmp_path / "test_generate_prompt.json"
+    scenario_path.write_text(json.dumps(scenario))
 
-    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=scenario_path)
+    engine = GameEngine(llm_providers=mock_llm_providers, scorer_llm_provider=mock_scorer_llm_provider, scenario_path=str(scenario_path))
     engine.turn = 1
     prompt = engine.generate_prompt(engine.get_ai_players()[0])
 
@@ -202,8 +180,6 @@ def test_generate_prompt_with_different_contexts(mock_llm_providers, mock_scorer
     assert "Status of Other Participants:" in prompt
     assert "China:" in prompt
     assert "Population: 1400" in prompt
-
-    os.remove(scenario_path)
 
 def test_run_loop_missing_provider(mock_scorer_llm_provider, capsys):
     """
@@ -220,3 +196,98 @@ def test_run_loop_missing_provider(mock_scorer_llm_provider, capsys):
 
     captured = capsys.readouterr()
     assert "Warning: No LLM provider found for player Steve Jobs. Skipping turn." in captured.out
+
+
+def test_generate_scoring_prompt_no_scoring_parameters(
+    mock_llm_providers, mock_scorer_llm_provider, tmp_path
+):
+    """
+    Tests that the scoring prompt is not generated if there are no scoring
+    parameters in the scenario.
+    """
+    scenario = {"name": "Test Scenario", "players": []}
+    scenario_path = tmp_path / "test_scenario.json"
+    scenario_path.write_text(json.dumps(scenario))
+
+    engine = GameEngine(
+        llm_providers=mock_llm_providers,
+        scorer_llm_provider=mock_scorer_llm_provider,
+        scenario_path=str(scenario_path),
+    )
+    prompt = engine.generate_scoring_prompt()
+    assert prompt is None
+
+
+def test_get_ai_players_missing_type(
+    mock_llm_providers, mock_scorer_llm_provider, tmp_path
+):
+    """
+    Tests that a player with a missing 'type' key is not considered an AI player.
+    """
+    scenario = {
+        "name": "Test Scenario",
+        "players": [{"name": "Player1"}],
+    }
+    scenario_path = tmp_path / "test_scenario.json"
+    scenario_path.write_text(json.dumps(scenario))
+
+    engine = GameEngine(
+        llm_providers=mock_llm_providers,
+        scorer_llm_provider=mock_scorer_llm_provider,
+        scenario_path=str(scenario_path),
+    )
+    ai_players = engine.get_ai_players()
+    assert len(ai_players) == 0
+
+
+def test_save_game_no_scorecard(
+    mock_llm_providers, mock_scorer_llm_provider, tmp_path
+):
+    """
+    Tests that the game can be saved correctly when there is no scorecard.
+    """
+    scenario = {"name": "Test Scenario", "players": []}
+    scenario_path = tmp_path / "test_scenario.json"
+    scenario_path.write_text(json.dumps(scenario))
+    save_path = tmp_path / "save.json"
+
+    engine = GameEngine(
+        llm_providers=mock_llm_providers,
+        scorer_llm_provider=mock_scorer_llm_provider,
+        scenario_path=str(scenario_path),
+    )
+    engine.save_game(str(save_path))
+
+    assert save_path.exists()
+    with open(save_path, "r") as f:
+        game_state = json.load(f)
+    assert game_state["scorecard"] == {}
+
+
+def test_load_game_no_scorecard(
+    mock_llm_providers, mock_scorer_llm_provider, tmp_path
+):
+    """
+    Tests that the game can be loaded correctly when there is no scorecard.
+    """
+    scenario = {"name": "Test Scenario", "players": []}
+    scenario_path = tmp_path / "test_scenario.json"
+    scenario_path.write_text(json.dumps(scenario))
+    save_path = tmp_path / "save.json"
+
+    game_state = {
+        "turn": 1,
+        "scenario": scenario,
+        "history": [],
+        "scorecard": {},
+    }
+    save_path.write_text(json.dumps(game_state))
+
+    engine = GameEngine(
+        llm_providers=mock_llm_providers,
+        scorer_llm_provider=mock_scorer_llm_provider,
+        scenario_path=str(scenario_path),
+    )
+    engine.load_game(str(save_path))
+
+    assert engine.scorecard is None

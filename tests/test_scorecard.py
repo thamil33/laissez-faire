@@ -101,3 +101,40 @@ def test_scorecard_render_complex_template(scenario_template):
     scorecard.data = {"Player1": {"score": 100}, "Player2": {"score": 50}}
     rendered = scorecard.render()
     assert rendered == "Scores:\nPlayer1: 100\nPlayer2: 50\nPlayer1 again: 100"
+
+def test_safe_eval_invalid_expression_variable(scenario_template):
+    """Tests that _safe_eval handles an invalid expression."""
+    scorecard = Scorecard(scenario_template)
+    with pytest.raises(ValueError, match="Invalid expression: unknown variable or number x"):
+        scorecard._safe_eval("x + 1", {})
+
+def test_safe_eval_invalid_expression_operator(scenario_template):
+    """Tests that _safe_eval handles an invalid expression."""
+    scorecard = Scorecard(scenario_template)
+    with pytest.raises(ValueError, match="Invalid expression: unknown variable or number y"):
+        scorecard._safe_eval("1 + y", {})
+
+def test_safe_eval_unsupported_operator(scenario_template):
+    """Tests that _safe_eval handles an unsupported operator."""
+    scorecard = Scorecard(scenario_template)
+    with pytest.raises(ValueError, match=r"Unsupported operator: %"):
+        scorecard._safe_eval("1 % 2", {})
+
+def test_scorecard_update_missing_config(scenario_template):
+    """Tests updating the scorecard with a missing configuration."""
+    scenario_template["scoring_parameters"] = {}
+    scorecard = Scorecard(scenario_template)
+    scorecard.data = {"Player1": {"score": 10}}
+    new_data = {"Player1": {"score": 5}}
+    scorecard.update(new_data)
+    assert scorecard.data == {"Player1": {"score": 10}}
+
+def test_scorecard_update_error_calculating_score(scenario_template, capsys):
+    """Tests that an error is handled when calculating a score."""
+    scenario_template["scoring_parameters"]["score"]["calculation"] = "current_value + x"
+    scorecard = Scorecard(scenario_template)
+    scorecard.data = {"Player1": {"score": 10}}
+    new_data = {"Player1": {"score": 5}}
+    scorecard.update(new_data)
+    captured = capsys.readouterr()
+    assert "Error calculating score for score" in captured.out
