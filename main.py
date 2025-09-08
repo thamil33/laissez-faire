@@ -36,18 +36,21 @@ def get_providers(config_path="config.json"):
             config = json.load(f)
         return config.get("providers", {})
     except FileNotFoundError:
-        print(f"Warning: {config_path} not found. Using default 'local' provider.")
-        return {"local": {}}
+        print(f"Warning: {config_path} not found. LLM providers will not be available.")
+        return {}
 
 def create_llm_provider(provider_name, llm_providers_config, summarizer_provider=None):
     """
     Helper function to create a single LLM provider.
     """
-    provider_config = llm_providers_config.get(provider_name, {})
+    provider_config = llm_providers_config.get(provider_name)
+    if not provider_config:
+        raise ValueError(f"Provider '{provider_name}' not found in config.json")
+
     return LLMProvider(
-        model=provider_config.get("model", "local"),
         api_key=provider_config.get("api_key"),
         base_url=provider_config.get("base_url"),
+        model_name=provider_config.get("model_name"),
         summarizer_provider=summarizer_provider
     )
 
@@ -64,14 +67,23 @@ def start_new_game(scenario_path, config_path="config.json"):
         print(f"Error loading scenario file: {e}")
         return
 
-    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
-    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
+    try:
+        scorer_provider_name = scenario.get("scorer_llm_provider")
+        if not scorer_provider_name:
+            raise ValueError("scorer_llm_provider not defined in scenario")
+        scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
 
-    llm_providers = {}
-    for player in scenario.get("players", []):
-        if player.get("type") == "ai":
-            provider_name = player.get("llm_provider", "local")
-            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
+        llm_providers = {}
+        for player in scenario.get("players", []):
+            if player.get("type") == "ai":
+                provider_name = player.get("llm_provider")
+                if not provider_name:
+                    raise ValueError(f"llm_provider not defined for player {player['name']}")
+                llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
+
+    except ValueError as e:
+        print(f"Error setting up LLM providers: {e}")
+        return
 
     engine = GameEngine(
         llm_providers=llm_providers,
@@ -99,14 +111,23 @@ def load_saved_game(save_path, config_path="config.json"):
         return
     scenario = game_state["scenario"]
 
-    scorer_provider_name = scenario.get("scorer_llm_provider", "local")
-    scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
+    try:
+        scorer_provider_name = scenario.get("scorer_llm_provider")
+        if not scorer_provider_name:
+            raise ValueError("scorer_llm_provider not defined in scenario")
+        scorer_llm_provider = create_llm_provider(scorer_provider_name, llm_providers_config)
 
-    llm_providers = {}
-    for player in scenario.get("players", []):
-        if player.get("type") == "ai":
-            provider_name = player.get("llm_provider", "local")
-            llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
+        llm_providers = {}
+        for player in scenario.get("players", []):
+            if player.get("type") == "ai":
+                provider_name = player.get("llm_provider")
+                if not provider_name:
+                    raise ValueError(f"llm_provider not defined for player {player['name']}")
+                llm_providers[player["name"]] = create_llm_provider(provider_name, llm_providers_config, summarizer_provider=scorer_llm_provider)
+
+    except ValueError as e:
+        print(f"Error setting up LLM providers: {e}")
+        return
 
     engine = GameEngine(
         llm_providers=llm_providers,

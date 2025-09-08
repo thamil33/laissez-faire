@@ -74,19 +74,16 @@ To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` in
     {
       "providers": {
         "openai": {
-          "model": "openai",
           "model_name": "gpt-4",
           "api_key": "YOUR_OPENAI_API_KEY",
           "base_url": null
         },
         "openrouter": {
-          "model": "openai",
           "model_name": "google/gemini-flash-1.5",
           "api_key": "YOUR_OPENROUTER_API_KEY",
           "base_url": "https://openrouter.ai/api/v1"
         },
         "lm_studio": {
-          "model": "openai",
           "model_name": "local-model",
           "api_key": "not-needed",
           "base_url": "http://localhost:1234/v1"
@@ -99,10 +96,9 @@ To get started with Laissez-faire, you will need to have Python 3.7+ and `uv` in
 
     Any service that provides an OpenAI-compatible API can be used. This includes **OpenRouter** and **LM Studio**.
 
-    1.  **Set the `model` parameter**: This should be set to `"openai"` to use the correct logic in the game engine.
-    2.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`).
-    3.  **Set your `api_key`**: Add your API key for the service.
-    4.  **Set the `base_url`**: Provide the server address for the API.
+    1.  **Set the `model_name`**: Specify the exact model you want to use (e.g., `"google/gemini-flash-1.5"`).
+    2.  **Set your `api_key`**: Add your API key for the service.
+    3.  **Set the `base_url`**: Provide the server address for the API.
 
     Scenarios can now use `"llm_provider": "your_provider_name"` to have AI players use the specified model.
 
