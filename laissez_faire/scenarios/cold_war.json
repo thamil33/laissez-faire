@@ -67,17 +67,29 @@
     "influence_europe": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in influence in Europe for each player."
+      "prompt": "Return the change (delta) in influence in Europe for each player.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in influence in Europe, e.g. -10, 0, or +10."
+      }
     },
     "influence_asia": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in influence in Asia for each player."
+      "prompt": "Return the change (delta) in influence in Asia for each player.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in influence in Asia, e.g. -10, 0, or +10."
+      }
     },
     "influence_africa": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in influence in Africa for each player."
+      "prompt": "Return the change (delta) in influence in Africa for each player.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in influence in Africa, e.g. -10, 0, or +10."
+      }
     }
   },
   "scorecard": {

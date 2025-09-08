@@ -36,22 +36,38 @@
     "economy_score": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in the economy score for each empire."
+      "prompt": "Return the change (delta) in the economy score for each empire.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in the economy score, e.g. -100, 0, or +100."
+      }
     },
     "technology_score": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in the technology score for each empire."
+      "prompt": "Return the change (delta) in the technology score for each empire.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in the technology score, e.g. -100, 0, or +100."
+      }
     },
     "military_power": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in military power for each empire."
+      "prompt": "Return the change (delta) in military power for each empire.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in the military power, e.g. -100, 0, or +100."
+      }
     },
     "diplomatic_weight": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in diplomatic weight for each empire."
+      "prompt": "Return the change (delta) in diplomatic weight for each empire.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in the diplomatic weight, e.g. -100, 0, or +100."
+      }
     }
   },
   "scorecard": {

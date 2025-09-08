@@ -40,12 +40,13 @@ class LLMProvider:
                 self.histories[player_name].append({"role": "system", "content": system_prompt})
         return self.histories[player_name]
 
-    def get_response(self, player_name, prompt):
+    def get_response(self, player_name, prompt, tools=None):
         """
         Gets a response from the LLM, maintaining conversation history.
 
         :param player_name: The name of the player to associate with the history.
         :param prompt: The prompt to send to the LLM.
+        :param tools: An optional list of tools for function calling.
         :return: The LLM's response as a string.
         """
         history = self.get_or_create_history(player_name)
@@ -59,7 +60,7 @@ class LLMProvider:
         if self.model == "local":
             response_content = self._get_response_local(history)
         elif self.model == "openai":
-            response_content = self._get_response_openai(history)
+            response_content = self._get_response_openai(history, tools)
         else:
             raise ValueError(f"Unsupported LLM model: {self.model}")
 
@@ -100,7 +101,7 @@ class LLMProvider:
         print(f"Sending messages to local model: {messages}")
         return "This is a placeholder response from the local LLM."
 
-    def _get_response_openai(self, messages):
+    def _get_response_openai(self, messages, tools=None):
         """
         Gets a response from an OpenAI-compatible API, using conversation history.
         """
@@ -113,11 +114,23 @@ class LLMProvider:
         )
 
         try:
-            response = client.chat.completions.create(
-                model=self.model_name,
-                messages=messages
-            )
-            return response.choices[0].message.content
+            completion_params = {
+                "model": self.model_name,
+                "messages": messages
+            }
+            if tools:
+                completion_params["tools"] = tools
+                completion_params["tool_choice"] = "auto"
+
+            response = client.chat.completions.create(**completion_params)
+            message = response.choices[0].message
+
+            if message.tool_calls:
+                # We only handle the first tool call for now
+                tool_call = message.tool_calls[0]
+                return tool_call.function.arguments
+
+            return message.content
         except openai.APIError as e:
             print(f"Error from OpenAI API: {e}")
             return "Error: Could not get a response from the model."

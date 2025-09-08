@@ -12,8 +12,8 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # Define the models to be tested
 MODELS_TO_TEST = [
-    "deepseek/deepseek-chat-v3-0324",
-    "google/gemini-2.0-flash-001",
+    "openai/gpt-oss-120b",
+    "google/gemini-2.5-flash",
 ]
 
 @pytest.mark.skipif(not OPENROUTER_API_KEY, reason="OPENROUTER_API_KEY is not set")
