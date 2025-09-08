@@ -273,45 +273,75 @@ class GameEngine:
             return
 
         print("\n--- Scoring Turn ---")
-        scoring_prompt = self.generate_scoring_prompt()
+        scoring_prompt, tools = self._generate_scoring_request()
         if not scoring_prompt:
             print("No scoring parameters found in the scenario. Skipping scoring.")
             return
 
         print("Getting scores from LLM...")
-        scores_str = self.scorer_llm_provider.get_response("scorer", scoring_prompt)
-        print(f"LLM Scores: {scores_str}")
+        response_str = self.scorer_llm_provider.get_response("scorer", scoring_prompt, tools=tools)
+        print(f"LLM Scores: {response_str}")
 
         try:
-            llm_scores = json.loads(scores_str)
+            # The response should be a JSON object with the arguments from the tool call
+            response_data = json.loads(response_str)
+            llm_scores = response_data.get("scores", {})
             self.scorecard.update(llm_scores)
         except (json.JSONDecodeError, TypeError):
             print("Error: Could not decode scores from LLM response.")
 
-    def generate_scoring_prompt(self):
+    def _generate_scoring_request(self):
         """
-        Generates a prompt for the LLM to score the players.
+        Generates a prompt and a tool schema for the LLM to score the players.
         """
         scenario = self.scenario
         scoring_params = scenario.get("scoring_parameters")
         if not scoring_params:
-            return None
+            return None, None
 
+        # Generate the text prompt
         prompt = "You are an impartial judge. Based on the history of actions below, please score each player on the following criteria:\n"
         for score_name, config in scoring_params.items():
             prompt += f"  - {score_name}: {config.get('prompt', '')}\n"
-
-        player_names = [p["controls"] for p in self.scenario.get("players", [])]
-        prompt += f"\nPlease return the scores for the players: {', '.join(player_names)}.\n"
-
-        prompt += "\nReturn the scores in a JSON format, like this: {\"player_name\": {\"score1\": value, \"score2\": value}}.\n"
-
         prompt += "\n--- History of Actions ---\n"
         recent_history = [h for h in self.history if h['turn'] == self.turn]
         for event in recent_history:
             prompt += f"Turn {event['turn']}, {event['player']}: {event['action']}\n"
 
-        return prompt
+        # Generate the tool schema
+        player_names = [p["controls"] for p in self.scenario.get("players", [])]
+        player_properties = {}
+        for player_name in player_names:
+            score_properties = {}
+            for score_name, config in scoring_params.items():
+                if "tool_schema" in config:
+                    score_properties[score_name] = config["tool_schema"]
+            player_properties[player_name] = {
+                "type": "object",
+                "properties": score_properties
+            }
+
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "record_scores",
+                    "description": "Records the scores for all players.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "scores": {
+                                "type": "object",
+                                "properties": player_properties
+                            }
+                        },
+                        "required": ["scores"]
+                    }
+                }
+            }
+        ]
+
+        return prompt, tools
 
     def save_game(self, save_path):
         """

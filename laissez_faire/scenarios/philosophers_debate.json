@@ -36,22 +36,38 @@
     "eloquence": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in eloquence for each debater."
+      "prompt": "Return the change (delta) in eloquence for each debater.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in eloquence for the debater, e.g. -1, 0, or +1."
+      }
     },
     "originality": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in originality for each debater."
+      "prompt": "Return the change (delta) in originality for each debater.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in originality for the debater, e.g. -1, 0, or +1."
+      }
     },
     "relevance": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in relevance for each debater."
+      "prompt": "Return the change (delta) in relevance for each debater.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in relevance for the debater, e.g. -1, 0, or +1."
+      }
     },
     "logic": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in logic for each debater."
+      "prompt": "Return the change (delta) in logic for each debater.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in logic for the debater, e.g. -1, 0, or +1."
+      }
     }
   },
   "scorecard": {

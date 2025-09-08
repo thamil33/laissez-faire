@@ -47,9 +47,9 @@ def test_game_engine_run_and_turn_increment(mock_llm_providers, mock_scorer_llm_
     assert engine.turn == 1
 
 
-def test_scoring_system_and_prompt_generation(mock_scorer_llm_provider):
+def test_scoring_system_with_function_calling(mock_scorer_llm_provider):
     """
-    Tests the scoring system and the generalized prompt generation.
+    Tests the scoring system using the new function calling mechanism.
     """
     scenario_path = "laissez_faire/scenarios/philosophers_debate.json"
 
@@ -65,31 +65,25 @@ def test_scoring_system_and_prompt_generation(mock_scorer_llm_provider):
 
     einstein_provider.get_response.return_value = "Einstein's opening statement."
     jobs_provider.get_response.return_value = "Jobs' counter-argument."
-    mock_scorer_llm_provider.get_response.return_value = '{"Einstein": {"eloquence": 1, "logic": 2}, "Jobs": {"eloquence": 2, "logic": 1}}'
+
+    # Simulate the LLM returning a tool call with JSON arguments
+    mock_scorer_llm_provider.get_response.return_value = '{"scores": {"Einstein": {"eloquence": 1, "logic": 2, "relevance": 0, "originality": 0}, "Jobs": {"eloquence": 2, "logic": 1, "relevance": 0, "originality": 0}}}'
 
     mock_ui = MagicMock()
 
     engine.run(max_turns=1, ui=mock_ui)
 
+    # Test that the scorer's get_response was called with a tool schema
+    scorer_call_args = mock_scorer_llm_provider.get_response.call_args
+    assert "tools" in scorer_call_args.kwargs
+    tools_arg = scorer_call_args.kwargs["tools"]
+    assert tools_arg[0]["function"]["name"] == "record_scores"
+    assert "eloquence" in tools_arg[0]["function"]["parameters"]["properties"]["scores"]["properties"]["Einstein"]["properties"]
+
     # Test scoring
     assert engine.scorecard.data["Einstein"]["eloquence"] == 1
     assert engine.scorecard.data["Jobs"]["logic"] == 1
     mock_ui.display_scores.assert_called_once_with(engine.scorecard)
-
-    # Test prompt generation
-    einstein_prompt = einstein_provider.get_response.call_args[0][1]
-    assert "Turn 1" in einstein_prompt
-    assert "Your Current Status:" in einstein_prompt
-    assert "Field: Theoretical Physics" in einstein_prompt
-    assert "Status of Other Participants:" in einstein_prompt
-    assert "Jobs:" in einstein_prompt
-
-    jobs_prompt = jobs_provider.get_response.call_args[0][1]
-    assert "Turn 1" in jobs_prompt
-    assert "Your Current Status:" in jobs_prompt
-    assert "Famous For: Apple Inc., iPhone" in jobs_prompt
-    assert "Status of Other Participants:" in jobs_prompt
-    assert "Einstein:" in jobs_prompt
 
 
 def test_run_with_no_ai_players(mock_llm_providers, mock_scorer_llm_provider, capsys, tmp_path):
@@ -198,11 +192,11 @@ def test_run_loop_missing_provider(mock_scorer_llm_provider, capsys):
     assert "Warning: No LLM provider found for player Steve Jobs. Skipping turn." in captured.out
 
 
-def test_generate_scoring_prompt_no_scoring_parameters(
+def test_generate_scoring_request_no_scoring_parameters(
     mock_llm_providers, mock_scorer_llm_provider, tmp_path
 ):
     """
-    Tests that the scoring prompt is not generated if there are no scoring
+    Tests that the scoring request is not generated if there are no scoring
     parameters in the scenario.
     """
     scenario = {"name": "Test Scenario", "players": []}
@@ -214,8 +208,9 @@ def test_generate_scoring_prompt_no_scoring_parameters(
         scorer_llm_provider=mock_scorer_llm_provider,
         scenario_path=str(scenario_path),
     )
-    prompt = engine.generate_scoring_prompt()
+    prompt, tools = engine._generate_scoring_request()
     assert prompt is None
+    assert tools is None
 
 
 def test_get_ai_players_missing_type(

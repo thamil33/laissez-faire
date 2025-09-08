@@ -42,7 +42,11 @@
     "users": {
       "type": "calculated",
       "calculation": "current_value * (1 + llm_judgement)",
-      "prompt": "Return a user growth multiplier (e.g., 0.1 for 10% growth) for each company."
+      "prompt": "Return a user growth multiplier (e.g., 0.1 for 10% growth) for each company.",
+      "tool_schema": {
+        "type": "number",
+        "description": "The user growth multiplier for the company, e.g. 0.1 for 10% growth, or -0.05 for a 5% decline."
+      }
     }
   },
   "scorecard": {
