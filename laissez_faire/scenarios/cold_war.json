@@ -39,6 +39,7 @@
       "eastern_europe_influence": "NEU",
       "asia_influence": "NEU",
       "africa_influence": "NEU",
+      "middle_east_influence": "NEU",
       "south_america_influence": "USA",
       "defcon_level": 5
     },
@@ -54,8 +55,27 @@
       "eastern_europe_influence": "USSR",
       "asia_influence": "NEU",
       "africa_influence": "NEU",
+      "middle_east_influence": "NEU",
       "south_america_influence": "NEU",
       "defcon_level": 5
+    },
+    "Yugoslavia": {
+      "alignment": "Non-Aligned",
+      "economic_stability": 0.5,
+      "political_stability": 0.6,
+      "military_strength": 0.4
+    },
+    "India": {
+        "alignment": "Non-Aligned",
+        "economic_stability": 0.4,
+        "political_stability": 0.7,
+        "military_strength": 0.3
+    },
+    "Egypt": {
+        "alignment": "Non-Aligned",
+        "economic_stability": 0.4,
+        "political_stability": 0.5,
+        "military_strength": 0.3
     }
   },
   "scoring_parameters": {
@@ -108,6 +128,14 @@
         "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
       }
     },
+    "middle_east_influence": {
+        "type": "absolute",
+        "prompt": "Who has more influence in the Middle East? ('USA', 'USSR', or 'NEU')",
+        "tool_schema": {
+            "type": "string",
+            "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+        }
+    },
     "south_america_influence": {
         "type": "absolute",
         "prompt": "Who has more influence in South America? ('USA', 'USSR', or 'NEU')",
@@ -127,6 +155,6 @@
   },
   "scorecard": {
     "render_type": "text",
-    "template": "[bold]Global Situation Report[/bold]\n\nDEFCON Level: [bold red]{USA.defcon_level}[/bold red]\n\n[cyan]USA[/cyan] Prestige: {USA.global_prestige} | Propaganda: {USA.propaganda_effectiveness}\n[magenta]USSR[/magenta] Prestige: {USSR.global_prestige} | Propaganda: {USSR.propaganda_effectiveness}\n\n\n[bold]World Influence Map[/bold]\n[white]NEU[/white] = Neutral/Contested | [blue]USA[/blue] = USA Influence | [red]USSR[/red] = USSR Influence\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /  SA:{USA.south_america_influence}   WE:{USA.western_europe_influence} EE:{USSR.eastern_europe_influence}  \\\n   /                         \\\n  /      Asia:{USA.asia_influence}               \\\n |                           |\n |      Africa:{USA.africa_influence}            |\n |                           |\n  \\                         /\n   `'-.,_______________,.-'`"
+    "template": "[bold]Global Situation Report - {turn_date}[/bold]\n\nDEFCON Level: [bold red]{USA.defcon_level}[/bold red]\n\n[cyan]USA[/cyan] Prestige: {USA.global_prestige} | Propaganda: {USA.propaganda_effectiveness}\n[magenta]USSR[/magenta] Prestige: {USSR.global_prestige} | Propaganda: {USSR.propaganda_effectiveness}\n\n\n[bold]World Influence Map[/bold]\nKey: 🇺🇸 USA | 🇷🇺 USSR | 🏳️ Neutral\n\n- [bold]North America:[/bold] 🇺🇸\n- [bold]South America:[/bold] {{ \"'🇺🇸' if USA['south_america_influence'] == 'USA' else ('🇷🇺' if USSR['south_america_influence'] == 'USSR' else '🏳️')\" }}\n- [bold]Western Europe:[/bold] {{ \"'🇺🇸' if USA['western_europe_influence'] == 'USA' else ('🇷🇺' if USSR['western_europe_influence'] == 'USSR' else '🏳️')\" }}\n- [bold]Eastern Europe:[/bold] {{ \"'🇷🇺' if USSR['eastern_europe_influence'] == 'USSR' else ('🇺🇸' if USA['eastern_europe_influence'] == 'USA' else '🏳️')\" }}\n- [bold]Africa:[/bold] {{ \"'🇺🇸' if USA['africa_influence'] == 'USA' else ('🇷🇺' if USSR['africa_influence'] == 'USSR' else '🏳️')\" }}\n- [bold]Middle East:[/bold] {{ \"'🇺🇸' if USA['middle_east_influence'] == 'USA' else ('🇷🇺' if USSR['middle_east_influence'] == 'USSR' else '🏳️')\" }}\n- [bold]Asia:[/bold] {{ \"'🇺🇸' if USA['asia_influence'] == 'USA' else ('🇷🇺' if USSR['asia_influence'] == 'USSR' else '🏳️')\" }}\n"
   }
 }

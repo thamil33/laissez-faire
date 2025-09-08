@@ -1,5 +1,5 @@
 {
-  "name": "Space Exploration",
+  "name": "Stellaris: The Grand Strategy",
   "description": "A grand strategy game set in space, inspired by Stellaris.",
   "start_date": "2200-01-01",
   "player_entity_key": "empires",
@@ -25,11 +25,23 @@
   "empires": {
     "Imperium": {
       "government_type": "Imperial",
-      "ethics": ["Authoritarian", "Militarist", "Xenophobe"]
+      "ethics": ["Authoritarian", "Militarist", "Xenophobe"],
+      "species_traits": ["Intelligent", "Strong", "Nonadaptive"],
+      "homeworld": "Sol III (Earth)",
+      "economy_score": 1000,
+      "technology_score": 1000,
+      "military_power": 1200,
+      "diplomatic_weight": 800
     },
     "Republic": {
       "government_type": "Democratic",
-      "ethics": ["Egalitarian", "Pacifist", "Xenophile"]
+      "ethics": ["Egalitarian", "Pacifist", "Xenophile"],
+      "species_traits": ["Charismatic", "Communal", "Weak"],
+      "homeworld": "Alpha Centauri Bb",
+      "economy_score": 1100,
+      "technology_score": 900,
+      "military_power": 800,
+      "diplomatic_weight": 1200
     }
   },
   "scoring_parameters": {
@@ -71,7 +83,36 @@
     }
   },
   "scorecard": {
-    "render_type": "json"
+    "render_type": "json",
+    "template": {
+      "turn_date": "{turn_date}",
+      "empires": {
+        "Imperium": {
+          "government_type": "{Imperium.government_type}",
+          "ethics": "{Imperium.ethics}",
+          "species_traits": "{Imperium.species_traits}",
+          "homeworld": "{Imperium.homeworld}",
+          "economy_score": "{Imperium.economy_score}",
+          "technology_score": "{Imperium.technology_score}",
+          "military_power": "{Imperium.military_power}",
+          "diplomatic_weight": "{Imperium.diplomatic_weight}"
+        },
+        "Republic": {
+          "government_type": "{Republic.government_type}",
+          "ethics": "{Republic.ethics}",
+          "species_traits": "{Republic.species_traits}",
+          "homeworld": "{Republic.homeworld}",
+          "economy_score": "{Republic.economy_score}",
+          "technology_score": "{Republic.technology_score}",
+          "military_power": "{Republic.military_power}",
+          "diplomatic_weight": "{Republic.diplomatic_weight}"
+        }
+      },
+      "galaxy_parameters": {
+        "galaxy_size": "{parameters.galaxy_size}",
+        "ai_empires": "{parameters.ai_empires}"
+      }
+    }
   },
   "parameters": {
     "galaxy_size": "Medium",

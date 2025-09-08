@@ -81,8 +81,10 @@ def test_scoring_system_with_function_calling(mock_scorer_llm_provider):
     assert "eloquence" in tools_arg[0]["function"]["parameters"]["properties"]["scores"]["properties"]["Einstein"]["properties"]
 
     # Test scoring
-    assert engine.scorecard.data["Einstein"]["eloquence"] == 1
-    assert engine.scorecard.data["Jobs"]["logic"] == 1
+    assert engine.scorecard.data["Einstein"]["eloquence"] == 11
+    assert engine.scorecard.data["Einstein"]["logic"] == 12
+    assert engine.scorecard.data["Jobs"]["eloquence"] == 12
+    assert engine.scorecard.data["Jobs"]["logic"] == 11
     mock_ui.display_scores.assert_called_once_with(engine.scorecard)
 
 
