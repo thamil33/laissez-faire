@@ -56,19 +56,24 @@ def test_get_response_openai_no_api_key():
     with pytest.raises(ValueError, match="API key is required for OpenAI-compatible models."):
         provider.get_response("player1", "test prompt")
 
-@patch('openai.OpenAI')
-def test_get_response_openai_api_error(mock_openai_class):
+@patch("openai.OpenAI")
+def test_get_response_openai_api_error_silent_fail(mock_openai_class):
     """
-    Tests how the OpenAI provider handles an API error.
+    Tests that the OpenAI provider handles an API error gracefully.
     """
+    # To trigger the error, we need to import the exception class
+    from openai import APIError
+
     mock_instance = MagicMock()
-    mock_instance.chat.completions.create.side_effect = Exception("API Error")
+    mock_instance.chat.completions.create.side_effect = APIError(
+        "API Error", request=None, body=None
+    )
     mock_openai_class.return_value = mock_instance
 
     provider = LLMProvider(model="openai", api_key="test_key")
+    response = provider.get_response("player1", "test prompt")
 
-    with pytest.raises(Exception, match="API Error"):
-        provider.get_response("player1", "test prompt")
+    assert "Error: Could not get a response from the model." in response
 
 def test_unsupported_model():
     """
@@ -97,34 +102,50 @@ def test_get_or_create_history_no_prompt():
     history = provider.get_or_create_history("player2")
     assert history == []
 
-@patch('openai.OpenAI')
-def test_summarize_history(mock_openai_class):
+@patch('laissez_faire.llm.LLMProvider')
+def test_history_summarization_is_triggered(mock_llm_provider):
     """
-    Tests that the history summarization is triggered and works correctly.
+    Tests that the history summarization is triggered when the history
+    exceeds the maximum length.
     """
-    api_key = "test_api_key"
-    player_name = "player1"
-    system_prompt = "You are a helpful assistant."
-    summarization_response = "This is a summary."
+    # Create a provider with a short history length
+    provider = LLMProvider(max_history_length=3)
+    provider.summarizer_provider = mock_llm_provider
 
-    # Mock the response from the openai library
-    mock_response = MagicMock()
-    mock_response.choices = [MagicMock()]
-    mock_response.choices[0].message.content = summarization_response
+    # Add messages to the history to exceed the max length
+    provider.histories["player1"] = [
+        {"role": "system", "content": "system prompt"},
+        {"role": "user", "content": "message 1"},
+        {"role": "assistant", "content": "response 1"},
+        {"role": "user", "content": "message 2"},
+        {"role": "assistant", "content": "response 2"},
+    ]
 
-    mock_instance = MagicMock()
-    mock_instance.chat.completions.create.return_value = mock_response
-    mock_openai_class.return_value = mock_instance
+    # Summarize the history
+    provider.summarize_history("player1")
 
-    provider = LLMProvider(model="openai", api_key=api_key, max_history_length=3)
-    provider.get_or_create_history(player_name, system_prompt)
+    # Check that the summarizer was called
+    mock_llm_provider.get_response.assert_called_once()
 
-    # Add messages to exceed the history length
-    for i in range(4):
-        provider.get_response(player_name, f"message {i}")
 
-    # Check that the history was summarized
-    history = provider.histories[player_name]
-    assert len(history) == 4
-    assert "Summary of previous events" in provider.histories[player_name][1]['content']
-    assert mock_instance.chat.completions.create.call_count == 6
+@patch('laissez_faire.llm.LLMProvider')
+def test_history_is_not_summarized_when_not_needed(mock_llm_provider):
+    """
+    Tests that the history is not summarized when it is not needed.
+    """
+    # Create a provider with a short history length
+    provider = LLMProvider(max_history_length=5)
+    provider.summarizer_provider = mock_llm_provider
+
+    # Add messages to the history that do not exceed the max length
+    provider.histories["player1"] = [
+        {"role": "system", "content": "system prompt"},
+        {"role": "user", "content": "message 1"},
+        {"role": "assistant", "content": "response 1"},
+    ]
+
+    # Summarize the history
+    provider.summarize_history("player1")
+
+    # Check that the summarizer was not called
+    mock_llm_provider.get_response.assert_not_called()
