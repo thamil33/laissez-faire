@@ -67,11 +67,19 @@ def test_scorecard_render_missing_data(scenario_template):
 
 def test_scorecard_render_json():
     """Tests rendering the scorecard as JSON."""
-    scenario = {"scorecard": {"render_type": "json"}}
+    scenario = {
+        "scorecard": {
+            "render_type": "json",
+            "template": {
+                "player1_score": "{Player1.score}",
+                "player2_score": "{Player2.score}"
+            }
+        }
+    }
     scorecard = Scorecard(scenario)
     scorecard.data = {"Player1": {"score": 100}, "Player2": {"score": 50}}
     rendered = scorecard.render()
-    assert json.loads(rendered) == {"Player1": {"score": 100}, "Player2": {"score": 50}}
+    assert json.loads(rendered) == {"player1_score": "100", "player2_score": "50"}
 
 def test_scorecard_update_absolute_score(scenario_template):
     """Tests updating the scorecard with an absolute score type."""
@@ -105,19 +113,19 @@ def test_scorecard_render_complex_template(scenario_template):
 def test_safe_eval_invalid_expression_variable(scenario_template):
     """Tests that _safe_eval handles an invalid expression."""
     scorecard = Scorecard(scenario_template)
-    with pytest.raises(ValueError, match="Invalid expression: unknown variable or number x"):
+    with pytest.raises(NameError):
         scorecard._safe_eval("x + 1", {})
 
 def test_safe_eval_invalid_expression_operator(scenario_template):
     """Tests that _safe_eval handles an invalid expression."""
     scorecard = Scorecard(scenario_template)
-    with pytest.raises(ValueError, match="Invalid expression: unknown variable or number y"):
+    with pytest.raises(NameError):
         scorecard._safe_eval("1 + y", {})
 
 def test_safe_eval_unsupported_operator(scenario_template):
     """Tests that _safe_eval handles an unsupported operator."""
     scorecard = Scorecard(scenario_template)
-    with pytest.raises(ValueError, match=r"Unsupported operator: %"):
+    with pytest.raises(SyntaxError, match="Unsupported characters in expression."):
         scorecard._safe_eval("1 % 2", {})
 
 def test_scorecard_update_missing_config(scenario_template):

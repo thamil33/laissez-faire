@@ -1,13 +1,16 @@
 {
-  "name": "Modern Day USA",
-  "description": "A simulation of the United States in the modern day.",
+  "name": "Modern Day USA: A New Cold War",
+  "description": "A simulation of the modern-day geopolitical competition between the United States and China.",
   "start_date": "2024-01-01",
   "player_entity_key": "countries",
   "players": [
     {
       "name": "President of the United States",
-      "type": "human",
-      "controls": "USA"
+      "type": "ai",
+      "controls": "USA",
+      "llm_provider": "local",
+      "prompt_summary": "As the President of the United States, your goal is to maintain America's position as the world's leading superpower. You must focus on strengthening alliances, promoting democratic values, and countering China's growing influence. You will use a combination of diplomatic, economic, and military tools to protect U.S. interests and the international order.",
+      "system_prompt": "You are playing the role of the President of the United States. Your primary objective is to ensure American leadership in a world of renewed great power competition. Your strategies should include: 1. Alliance Building: Strengthen and expand your network of alliances, particularly in the Indo-Pacific, to create a united front against Chinese expansionism. 2. Technological Leadership: Invest in research and development to maintain a technological edge over China in critical areas like AI, quantum computing, and biotechnology. 3. Economic Competitiveness: Use trade policy and domestic investment to enhance American economic strength and reduce dependencies on Chinese supply chains. 4. Military Deterrence: Modernize your military to deter Chinese aggression, particularly in the context of Taiwan and the South China Sea. Your personality should be confident, assertive, and articulate. You must champion the values of democracy and a rules-based international order, while also being a pragmatic dealmaker."
     },
     {
       "name": "President of China",
@@ -25,14 +28,18 @@
       "economic_stability": 0.8,
       "political_stability": 0.6,
       "military_strength": 0.9,
-      "influence": 95
+      "influence": 95,
+      "technological_level": 90,
+      "cyber_warfare_capability": 85
     },
     "China": {
       "alignment": "self",
       "economic_stability": 0.85,
       "political_stability": 0.7,
       "military_strength": 0.8,
-      "influence": 90
+      "influence": 90,
+      "technological_level": 80,
+      "cyber_warfare_capability": 90
     }
   },
   "parameters": {
@@ -74,10 +81,28 @@
         "type": "integer",
         "description": "The change in influence in Africa, e.g. -10, 0, or +10."
       }
+    },
+    "technological_level": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in technological level for each country.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in technological level for the country, e.g. -5, 0, or +5."
+      }
+    },
+    "cyber_warfare_capability": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in cyber warfare capability for each country.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in cyber warfare capability for the country, e.g. -5, 0, or +5."
+      }
     }
   },
   "scorecard": {
     "render_type": "text",
-    "template": "World Influence Map:\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /                       \\\n   /     USA Influence       \\\n  /                           \\\n |  Americas: {USA.influence_americas} Europe: {USA.influence_europe}   |\n |  Asia: {USA.influence_asia}    Africa: {USA.influence_africa}      |\n |                           |\n |    China Influence        |\n |  Americas: {China.influence_americas} Europe: {China.influence_europe} |\n |  Asia: {China.influence_asia}    Africa: {China.influence_africa}     |\n  \\                         /\n   `'-.,_______________,.-'`"
+    "template": "\n[bold]======================================================================[/bold]\n[bold]                          SITUATION ROOM - {turn_date}                      [/bold]\n[bold]======================================================================[/bold]\n\n[bold]                USA[/bold]                                       [bold]CHINA[/bold]\n[cyan]Economic Stability[/cyan]: {USA.economic_stability:<3}                            [cyan]Economic Stability[/cyan]: {China.economic_stability}\n[cyan]Political Stability[/cyan]: {USA.political_stability:<2}                           [cyan]Political Stability[/cyan]: {China.political_stability}\n[cyan]Military Strength[/cyan]: {USA.military_strength:<4}                             [cyan]Military Strength[/cyan]: {China.military_strength}\n[cyan]Tech Level[/cyan]: {USA.technological_level:<11}                                [cyan]Tech Level[/cyan]: {China.technological_level}\n[cyan]Cyber Warfare[/cyan]: {USA.cyber_warfare_capability:<8}                             [cyan]Cyber Warfare[/cyan]: {China.cyber_warfare_capability}\n\n[bold]------------------------- GLOBAL INFLUENCE -------------------------[/bold]\n\n[bold]Region[/bold]          [bold]USA Influence[/bold]                         [bold]China Influence[/bold]\n[yellow]Americas[/yellow]       {USA.influence_americas:<3}                                       {China.influence_americas}\n[yellow]Europe[/yellow]         {USA.influence_europe:<3}                                       {China.influence_europe}\n[yellow]Asia[/yellow]           {USA.influence_asia:<3}                                       {China.influence_asia}\n[yellow]Africa[/yellow]         {USA.influence_africa:<3}                                       {China.influence_africa}\n\n[bold]======================================================================[/bold]\n"
   }
 }

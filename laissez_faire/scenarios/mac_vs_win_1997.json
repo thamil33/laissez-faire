@@ -1,13 +1,16 @@
 {
-  "name": "Mac vs. Windows 1997",
-  "description": "A simulation of the rivalry between Apple, Microsoft, and Linux in 1997.",
-  "start_date": "1997-01-01",
+  "name": "Mac vs. Windows 1997: The Brink of Collapse",
+  "description": "A simulation of the fierce rivalry between Apple, Microsoft, and the nascent Linux community in 1997, a pivotal year for the future of personal computing.",
+  "start_date": "1997-08-06",
   "player_entity_key": "companies",
   "players": [
     {
       "name": "Steve Jobs",
-      "type": "human",
-      "controls": "Apple"
+      "type": "ai",
+      "controls": "Apple",
+      "llm_provider": "local",
+      "prompt_summary": "As the newly-returned CEO of Apple, you must save the company from bankruptcy. Your goal is to refocus the product line, innovate with groundbreaking designs, and capture the hearts and minds of consumers with a message of creativity and individuality.",
+      "system_prompt": "You are Steve Jobs, and you have just returned to Apple as its interim CEO. The company is in a death spiral. Your task is to make the hard decisions necessary to save it. You must be ruthless in cutting projects and people that don't align with your vision. Your strategy is to focus on a few core products and make them insanely great. You believe in the power of design, simplicity, and marketing. You must inspire your team to create products that are not just tools, but extensions of the user's creativity. Your personality should be passionate, visionary, and uncompromising. You have a 'reality distortion field' that you can use to persuade and inspire."
     },
     {
       "name": "Bill Gates",
@@ -29,13 +32,25 @@
   "scorer_llm_provider": "local",
   "companies": {
     "Microsoft": {
-      "users": 200000000
+      "users": 200000000,
+      "market_share": 90,
+      "developer_support": 80,
+      "media_sentiment": 70,
+      "innovator_reputation": 60
     },
     "Apple": {
-      "users": 20000000
+      "users": 20000000,
+      "market_share": 5,
+      "developer_support": 40,
+      "media_sentiment": 50,
+      "innovator_reputation": 80
     },
     "Linux": {
-      "users": 1000000
+      "users": 1000000,
+      "market_share": 1,
+      "developer_support": 60,
+      "media_sentiment": 30,
+      "innovator_reputation": 70
     }
   },
   "scoring_parameters": {
@@ -47,10 +62,46 @@
         "type": "number",
         "description": "The user growth multiplier for the company, e.g. 0.1 for 10% growth, or -0.05 for a 5% decline."
       }
+    },
+    "market_share": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in market share for each company.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in market share for the company, e.g. -5, 0, or +5."
+      }
+    },
+    "developer_support": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in developer support for each company.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in developer support for the company, e.g. -10, 0, or +10."
+      }
+    },
+    "media_sentiment": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in media sentiment for each company.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in media sentiment for the company, e.g. -10, 0, or +10."
+      }
+    },
+    "innovator_reputation": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in innovator reputation for each company.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in innovator reputation for the company, e.g. -10, 0, or +10."
+      }
     }
   },
   "scorecard": {
     "render_type": "text",
-    "template": "Users:\n- Microsoft: {Microsoft.users}\n- Apple: {Apple.users}\n- Linux: {Linux.users}"
+    "template": "\n      ,-------------------------------------------------------.\n      | [bold]Industry Report[/bold] - {turn_date}                      | \n      |-------------------------------------------------------|\n      | [blue]Company[/blue]      | [green]Users[/green]      | [red]Mkt Share[/red] | [yellow]Devs[/yellow] | [cyan]Media[/cyan] | [magenta]Innovation[/magenta] |\n      |-----------------|-----------|----------|-------|-------|-------------|\n      | [blue]Microsoft[/blue]   | {Microsoft.users: <9} | {Microsoft.market_share: <8} | {Microsoft.developer_support: <5} | {Microsoft.media_sentiment: <5} | {Microsoft.innovator_reputation: <11} |\n      | [blue]Apple[/blue]       | {Apple.users: <9} | {Apple.market_share: <8} | {Apple.developer_support: <5} | {Apple.media_sentiment: <5} | {Apple.innovator_reputation: <11} |\n      | [blue]Linux[/blue]       | {Linux.users: <9} | {Linux.market_share: <8} | {Linux.developer_support: <5} | {Linux.media_sentiment: <5} | {Linux.innovator_reputation: <11} |\n      `-------------------------------------------------------'\n    "
   }
 }

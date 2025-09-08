@@ -1,5 +1,5 @@
 {
-  "name": "A Debate of Minds",
+  "name": "A Debate of Minds: Intuition vs. Analysis",
   "description": "A philosophical debate between Albert Einstein and Steve Jobs on the nature of innovation and intuition.",
   "start_date": "2024-01-01",
   "player_entity_key": "debaters",
@@ -25,11 +25,21 @@
   "debaters": {
     "Einstein": {
       "field": "Theoretical Physics",
-      "famous_for": "Theory of Relativity"
+      "famous_for": "Theory of Relativity",
+      "eloquence": 10,
+      "originality": 10,
+      "relevance": 10,
+      "logic": 10,
+      "persuasiveness": 10
     },
     "Jobs": {
       "field": "Technology & Business",
-      "famous_for": "Apple Inc., iPhone"
+      "famous_for": "Apple Inc., iPhone",
+      "eloquence": 10,
+      "originality": 10,
+      "relevance": 10,
+      "logic": 10,
+      "persuasiveness": 10
     }
   },
   "scoring_parameters": {
@@ -68,13 +78,29 @@
         "type": "integer",
         "description": "The change in logic for the debater, e.g. -1, 0, or +1."
       }
+    },
+    "persuasiveness": {
+      "type": "calculated",
+      "calculation": "current_value + llm_judgement",
+      "prompt": "Return the change (delta) in persuasiveness for each debater.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in persuasiveness for the debater, e.g. -1, 0, or +1."
+      }
     }
   },
   "scorecard": {
     "render_type": "text",
-    "template": "Debate Progress:\n\nEinstein vs. Jobs\n\n{Einstein.eloquence} [red]<-[/red] Eloquence [green]->[/green] {Jobs.eloquence}\n{Einstein.originality} [red]<-[/red] Originality [green]->[/green] {Jobs.originality}\n{Einstein.relevance} [red]<-[/red] Relevance [green]->[/green] {Jobs.relevance}\n{Einstein.logic} [red]<-[/red] Logic [green]->[/green] {Jobs.logic}\n"
+    "template": "\n[bold]==============================================================[/bold]\n[bold]                      DEBATE SCORECARD                      [/bold]\n[bold]==============================================================[/bold]\n\nTopic: {parameters.topic}\n\n[bold]DEBATER[/bold]          [bold]CRITERIA[/bold]         [bold]SCORE[/bold]\n--------------------------------------------------------------\n[cyan]Albert Einstein[/cyan]    Eloquence          {Einstein.eloquence}\n                  Originality        {Einstein.originality}\n                  Relevance          {Einstein.relevance}\n                  Logic              {Einstein.logic}\n                  Persuasiveness     {Einstein.persuasiveness}\n\n[magenta]Steve Jobs[/magenta]        Eloquence          {Jobs.eloquence}\n                  Originality        {Jobs.originality}\n                  Relevance          {Jobs.relevance}\n                  Logic              {Jobs.logic}\n                  Persuasiveness     {Jobs.persuasiveness}\n[bold]==============================================================[/bold]\n"
   },
   "parameters": {
-    "topic": "The role of intuition versus rigorous analysis in driving true innovation."
+    "topic": "The role of intuition versus rigorous analysis in driving true innovation.",
+    "potential_topics": [
+      "The relationship between science and art.",
+      "The ethical implications of artificial intelligence.",
+      "The meaning of a 'good life'.",
+      "The nature of consciousness.",
+      "The role of failure in success."
+    ]
   }
 }
