@@ -36,6 +36,7 @@ def test_get_response_openai_success(mock_openai_class):
     mock_response = MagicMock()
     mock_response.choices = [MagicMock()]
     mock_response.choices[0].message.content = expected_response
+    mock_response.choices[0].message.tool_calls = None
 
     mock_instance = MagicMock()
     mock_instance.chat.completions.create.return_value = mock_response

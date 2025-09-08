@@ -93,7 +93,11 @@ def test_gameplay_integration_with_openrouter(model_name):
         "coherence": {
           "type": "calculated",
           "calculation": "current_value + llm_judgement",
-          "prompt": "On a scale of 1-10, how coherent was the argument presented by each philosopher? Please return a JSON object with each philosopher's name as the key and their score as the value."
+          "prompt": "On a scale of 1-10, how coherent was the argument presented by each philosopher?",
+          "tool_schema": {
+            "type": "integer",
+            "description": "A coherence score from 1 to 10."
+          }
         }
       },
       "scorecard": {

@@ -62,21 +62,23 @@ For simple scoring, `scoring_parameters` can be a dictionary where the key is th
 }
 ```
 
-#### Advanced Scoring
+#### Function Calling for Scoring
 
-For more complex scoring, each score in `scoring_parameters` can be an object that defines how the score is calculated.
+To ensure reliable and structured scoring, the game engine uses a form of function calling with the scorer LLM. This is defined by the `tool_schema` object within each scoring parameter.
 
-- `type`: (string) The type of scoring. Can be `absolute` or `calculated`.
-- `calculation`: (string, required for `calculated` type) A formula for calculating the new score. It can use `current_value` and `llm_judgement`.
-- `prompt`: (string) The prompt used to ask the LLM for its judgement.
+- `tool_schema`: (object) A JSON schema object that defines the expected output for the score. This is used to construct a "tool" that the LLM is instructed to call.
+  - `type`: (string) The data type of the expected value (e.g., "integer", "string", "number").
+  - `description`: (string) A description of the value to be returned.
 
 **Example:**
 ```json
-"scoring_parameters": {
-  "influence_europe": {
-    "type": "calculated",
-    "calculation": "current_value + llm_judgement",
-    "prompt": "Return the change (delta) in influence in Europe for each player."
+"propaganda_effectiveness": {
+  "type": "calculated",
+  "calculation": "current_value + llm_judgement",
+  "prompt": "Assess the change in propaganda effectiveness for each superpower (from -10 to +10).",
+  "tool_schema": {
+    "type": "integer",
+    "description": "The change in propaganda effectiveness, e.g. -5, 0, or +5."
   }
 }
 ```
@@ -90,19 +92,27 @@ The `scorecard` object controls how the scorecard is displayed at the end of eac
 - `render_type`: (string) Can be `text` for a terminal-based display or `json` for integration with a GUI.
 - `template`: (string) For `text` render type, this is a string that can contain placeholders for scores, e.g., `{Player.score_name}`.
 
+#### Complex Scorecard Templates
+
+The `text` renderer uses the `rich` library, which supports a simplified version of bbcode for styling. You can use this to add colors, styles, and even emojis to your scorecard.
+
+- **Colors:** `[red]text[/red]`, `[bold blue]text[/bold blue]`
+- **Styles:** `[bold]text[/bold]`, `[italic]text[/italic]`
+- **Emojis:** `:emoji_name:` (e.g., `:globe_showing_americas:`)
+
 **Example:**
 ```json
 "scorecard": {
   "render_type": "text",
-  "template": "World Influence Map:\n\nUSA Influence in Europe: {USA.influence_europe}"
+  "template": "[bold]Global Situation Report[/bold]\n\nDEFCON Level: [bold red]{USA.defcon_level}[/bold red]\n\n[cyan]USA[/cyan] Prestige: {USA.global_prestige}\n[magenta]USSR[/magenta] Prestige: {USSR.global_prestige}\n\n\n[bold]World Influence Map[/bold]\n:globe_showing_americas: = Neutral/Contested | :us: = USA Influence | :ru: = USSR Influence"
 }
 ```
 
 ---
 
-## Full Example: Cold War
+## Full Example: Cold War (Complex)
 
-Here is the full JSON for the `cold_war.json` scenario, which you can use as a template.
+Here is the full JSON for the revised `cold_war.json` scenario, which demonstrates a more complex setup.
 
 ```json
 {
@@ -139,26 +149,102 @@ Here is the full JSON for the `cold_war.json` scenario, which you can use as a t
       "economic_stability": 0.9,
       "political_stability": 0.8,
       "military_strength": 0.7,
-      "influence": 90
+      "influence": 90,
+      "global_prestige": 100,
+      "propaganda_effectiveness": 0,
+      "western_europe_influence": "USA",
+      "eastern_europe_influence": "NEU",
+      "asia_influence": "NEU",
+      "africa_influence": "NEU",
+      "south_america_influence": "USA",
+      "defcon_level": 5
     },
     "USSR": {
       "alignment": "Eastern Bloc",
       "economic_stability": 0.6,
       "political_stability": 0.9,
       "military_strength": 0.8,
-      "influence": 80
+      "influence": 80,
+      "global_prestige": 80,
+      "propaganda_effectiveness": 0,
+      "western_europe_influence": "NEU",
+      "eastern_europe_influence": "USSR",
+      "asia_influence": "NEU",
+      "africa_influence": "NEU",
+      "south_america_influence": "NEU",
+      "defcon_level": 5
     }
   },
   "scoring_parameters": {
-    "influence_europe": {
+    "global_prestige": {
+      "type": "absolute",
+      "prompt": "Judge the current global prestige of each superpower on a scale of 1-200.",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The absolute global prestige score, from 1 to 200."
+      }
+    },
+    "propaganda_effectiveness": {
       "type": "calculated",
       "calculation": "current_value + llm_judgement",
-      "prompt": "Return the change (delta) in influence in Europe for each player."
+      "prompt": "Assess the change in propaganda effectiveness for each superpower (from -10 to +10).",
+      "tool_schema": {
+        "type": "integer",
+        "description": "The change in propaganda effectiveness, e.g. -5, 0, or +5."
+      }
+    },
+    "western_europe_influence": {
+      "type": "absolute",
+      "prompt": "Who has more influence in Western Europe? ('USA', 'USSR', or 'NEU')",
+      "tool_schema": {
+        "type": "string",
+        "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+      }
+    },
+    "eastern_europe_influence": {
+      "type": "absolute",
+      "prompt": "Who has more influence in Eastern Europe? ('USA', 'USSR', or 'NEU')",
+      "tool_schema": {
+        "type": "string",
+        "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+      }
+    },
+    "asia_influence": {
+      "type": "absolute",
+      "prompt": "Who has more influence in Asia? ('USA', 'USSR', or 'NEU')",
+      "tool_schema": {
+        "type": "string",
+        "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+      }
+    },
+    "africa_influence": {
+      "type": "absolute",
+      "prompt": "Who has more influence in Africa? ('USA', 'USSR', or 'NEU')",
+      "tool_schema": {
+        "type": "string",
+        "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+      }
+    },
+    "south_america_influence": {
+        "type": "absolute",
+        "prompt": "Who has more influence in South America? ('USA', 'USSR', or 'NEU')",
+        "tool_schema": {
+            "type": "string",
+            "description": "'USA' if USA has more influence, 'USSR' if USSR has more, 'NEU' for neutral."
+        }
+    },
+    "defcon_level": {
+        "type": "absolute",
+        "prompt": "Based on the actions this turn, what is the new DEFCON level for both players (5 is peace, 1 is imminent war)?",
+        "tool_schema": {
+            "type": "integer",
+            "description": "The new DEFCON level, from 1 to 5."
+        }
     }
   },
   "scorecard": {
     "render_type": "text",
-    "template": "World Influence Map:\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /                       \\\n   /     USA Influence       \\\n  /                           \\\n |     Europe: {USA.influence_europe}   Asia: {USA.influence_asia}    |\n |                           |\n |    Africa: {USA.influence_africa}      |\n |                           |\n |    USSR Influence         |\n |    Europe: {USSR.influence_europe}  Asia: {USSR.influence_asia}   |\n |   Africa: {USSR.influence_africa}       |\n  \\                         /\n   `'-.,_______________,.-'`"
+    "template": "[bold]Global Situation Report[/bold]\n\nDEFCON Level: [bold red]{USA.defcon_level}[/bold red]\n\n[cyan]USA[/cyan] Prestige: {USA.global_prestige} | Propaganda: {USA.propaganda_effectiveness}\n[magenta]USSR[/magenta] Prestige: {USSR.global_prestige} | Propaganda: {USSR.propaganda_effectiveness}\n\n\n[bold]World Influence Map[/bold]\n[white]NEU[/white] = Neutral/Contested | [blue]USA[/blue] = USA Influence | [red]USSR[/red] = USSR Influence\n\n      /`'-.      _/`.-'\\\n     /     `'--...--'`     \\\n    /  SA:{USA.south_america_influence}   WE:{USA.western_europe_influence} EE:{USSR.eastern_europe_influence}  \\\n   /                         \\\n  /      Asia:{USA.asia_influence}               \\\n |                           |\n |      Africa:{USA.africa_influence}            |\n |                           |\n  \\                         /\n   `'-.,_______________,.-'`"
   }
 }
 ```
