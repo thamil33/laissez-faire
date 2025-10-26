@@ -58,6 +58,8 @@ venv.bak/
 
 # Local configuration
 config.json
+uv.lock
+
 
 # Saves
 /saves/

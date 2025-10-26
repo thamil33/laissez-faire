@@ -12,8 +12,8 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 # Define the models to be tested
 MODELS_TO_TEST = [
-    "openai/gpt-oss-120b",
-    "google/gemini-2.5-flash",
+    "minimax/minimax-m2:free",
+    "z-ai/glm-4.5-air:free"
 ]
 
 @pytest.mark.skipif(not OPENROUTER_API_KEY, reason="OPENROUTER_API_KEY is not set")
@@ -105,8 +105,15 @@ def test_gameplay_integration_with_openrouter(model_name):
     with open(scenario_path, "w") as f:
         json.dump(scenario_data, f)
 
+    # Load engine settings from config.json
+    engine_settings = {}
+    if os.path.exists("config.json"):
+        with open("config.json", "r") as f:
+            config = json.load(f)
+            engine_settings = config.get("engine_settings", {})
+
     # Initialize the game engine
-    engine = GameEngine(llm_providers, scorer_provider, scenario_path)
+    engine = GameEngine(llm_providers, scorer_provider, scenario_path, engine_settings=engine_settings)
 
     try:
         # Run the game for one turn

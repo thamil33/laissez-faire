@@ -47,3 +47,9 @@ class TerminalUI:
         # which we can then print inside a panel.
         score_output = scorecard.render()
         self.console.print(Panel(score_output, title="Scorecard", border_style="green"))
+
+    def wait_for_turn(self):
+        """
+        Waits for the user to press Enter to continue to the next turn.
+        """
+        input("Press Enter to continue to the next turn...")

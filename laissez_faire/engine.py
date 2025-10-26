@@ -4,6 +4,7 @@ import os
 import operator
 
 from .llm import LLMProvider
+from .game_master import GameMaster
 
 class Scorecard:
     """
@@ -21,7 +22,7 @@ class Scorecard:
         A safe evaluator for simple arithmetic and conditional expressions.
         """
         # Add scenario parameters and data to the context
-        context.update(self.scenario_parameters)
+        context['parameters'] = self.scenario_parameters
         context.update(self.data)
 
         # Allow access to player data, e.g. USA.influence
@@ -77,15 +78,21 @@ class Scorecard:
                     # Use safe_eval to get the value of the placeholder
                     value = self._safe_eval(placeholder, {})
                     template = template.replace(f'{{{placeholder}}}', str(value))
-                except Exception:
-                    # If the placeholder is not an expression, just replace it
+                except Exception as e:
+                    # Fallback for simple placeholders that don't need eval
                     parts = placeholder.split('.')
                     if len(parts) == 2:
-                        player, score = parts
-                        value = self.data.get(player, {}).get(score, 0)
+                        obj, key = parts
+                        if obj == 'parameters':
+                            value = self.scenario_parameters.get(key, f"Error: {key} not in parameters")
+                        else:
+                            value = self.data.get(obj, {}).get(key, 0)
                         template = template.replace(f'{{{placeholder}}}', str(value))
                     elif placeholder == 'turn_date':
                         template = template.replace(f'{{{placeholder}}}', str(self.turn_date))
+                    else:
+                        print(f"Error rendering placeholder '{placeholder}': {e}")
+                        template = template.replace(f'{{{placeholder}}}', '[RENDER ERROR]')
 
 
             # Handle conditional placeholders like {{ 'a' if x > 0 else 'b' }}
@@ -127,12 +134,13 @@ class GameEngine:
     The main game engine for Laissez-faire.
     """
 
-    def __init__(self, llm_providers: dict, scorer_llm_provider: LLMProvider, scenario_path=None, saves_dir="saves"):
+    def __init__(self, llm_providers: dict, scorer_llm_provider: LLMProvider, scenario_path=None, saves_dir="saves", engine_settings=None):
         """
         Initializes the game engine.
         :param llm_providers: A dictionary of LLM providers for each player.
         :param scorer_llm_provider: An LLM provider for the scorer.
         :param scenario_path: The path to the scenario JSON file (optional).
+        :param engine_settings: A dictionary of engine settings.
         """
         self.scenario = self.load_scenario(scenario_path) if scenario_path else {}
         self.turn = 0
@@ -141,6 +149,8 @@ class GameEngine:
         self.history = []
         self.scorecard = None
         self.saves_dir = saves_dir
+        self.engine_settings = engine_settings if engine_settings is not None else {}
+        self.game_master = GameMaster(self.scorer_llm_provider)
 
         if self.scenario:
             self.initialize_system_prompts()
@@ -229,6 +239,9 @@ class GameEngine:
             self.save_game(os.path.join(self.saves_dir, "autosave.json"))
             print("Game auto-saved.")
 
+            if self.engine_settings.get("step_through_turns") and ui:
+                ui.wait_for_turn()
+
         print("Game simulation finished.")
 
     def get_turn_date(self):
@@ -296,16 +309,26 @@ class GameEngine:
             return
 
         print("Getting scores from LLM...")
-        response_str = self.scorer_llm_provider.get_response("scorer", scoring_prompt, tools=tools)
+        if self.engine_settings.get("debug_mode"):
+            print("\n--- Scoring LLM Call ---")
+            print(f"Prompt: {scoring_prompt}")
+            print(f"Tools: {json.dumps(tools, indent=2)}")
+            print("------------------------\n")
+        
+        response_str = self.game_master.get_valid_scores(scoring_prompt, tools)
         print(f"LLM Scores: {response_str}")
 
         try:
-            # The response should be a JSON object with the arguments from the tool call
             response_data = json.loads(response_str)
             llm_scores = response_data.get("scores", {})
+            reasoning = response_data.get("reasoning", "No reasoning provided.")
+            if self.engine_settings.get("debug_mode"):
+                print(f"Reasoning: {reasoning}")
             self.scorecard.update(llm_scores)
         except (json.JSONDecodeError, TypeError):
             print("Error: Could not decode scores from LLM response.")
+            if self.engine_settings.get("debug_mode"):
+                print(f"Malformed JSON string: {response_str}")
 
     def _generate_scoring_request(self):
         """
@@ -317,7 +340,7 @@ class GameEngine:
             return None, None
 
         # Generate the text prompt
-        prompt = "You are an impartial judge. Based on the history of actions below, please score each player on the following criteria:\n"
+        prompt = "You are an impartial judge. Based on the history of actions below, please provide a brief reasoning for your scoring decisions and then score each player on the following criteria:\n"
         for score_name, config in scoring_params.items():
             prompt += f"  - {score_name}: {config.get('prompt', '')}\n"
         prompt += "\n--- History of Actions ---\n"
@@ -350,9 +373,13 @@ class GameEngine:
                             "scores": {
                                 "type": "object",
                                 "properties": player_properties
+                            },
+                            "reasoning": {
+                                "type": "string",
+                                "description": "A brief explanation of the scoring decisions."
                             }
                         },
-                        "required": ["scores"]
+                        "required": ["scores", "reasoning"]
                     }
                 }
             }

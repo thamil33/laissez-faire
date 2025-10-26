@@ -29,15 +29,19 @@ def get_safe_path(base_dir, filename):
 
 def get_providers(config_path="config.json"):
     """
-    Loads LLM provider configurations from a file.
+    Loads LLM provider configurations and engine settings from a file.
     """
     try:
         with open(config_path, "r") as f:
             config = json.load(f)
-        return config.get("providers", {})
+        
+        providers = config.get("providers", {})
+        engine_settings = config.get("engine_settings", {})
+        
+        return providers, engine_settings
     except FileNotFoundError:
         print(f"Warning: {config_path} not found. LLM providers will not be available.")
-        return {}
+        return {}, {}
 
 def create_llm_provider(provider_name, llm_providers_config, summarizer_provider=None):
     """
@@ -58,7 +62,7 @@ def start_new_game(scenario_path, config_path="config.json"):
     """
     Starts a new game from a scenario file.
     """
-    llm_providers_config = get_providers(config_path)
+    llm_providers_config, engine_settings = get_providers(config_path)
 
     try:
         with open(scenario_path, 'r') as f:
@@ -88,7 +92,8 @@ def start_new_game(scenario_path, config_path="config.json"):
     engine = GameEngine(
         llm_providers=llm_providers,
         scorer_llm_provider=scorer_llm_provider,
-        scenario_path=scenario_path
+        scenario_path=scenario_path,
+        engine_settings=engine_settings
     )
     ui = TerminalUI()
 
@@ -101,7 +106,7 @@ def load_saved_game(save_path, config_path="config.json"):
     """
     Loads a game from a save file.
     """
-    llm_providers_config = get_providers(config_path)
+    llm_providers_config, engine_settings = get_providers(config_path)
 
     try:
         with open(save_path, 'r') as f:
@@ -131,7 +136,8 @@ def load_saved_game(save_path, config_path="config.json"):
 
     engine = GameEngine(
         llm_providers=llm_providers,
-        scorer_llm_provider=scorer_llm_provider
+        scorer_llm_provider=scorer_llm_provider,
+        engine_settings=engine_settings
     )
     engine.load_game(save_path)
     ui = TerminalUI()
